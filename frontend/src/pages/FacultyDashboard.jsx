@@ -7,9 +7,11 @@ import { ActivityDonutChart, CategoryStackedBar } from '../components/VisualChar
 
 const ActivityCard = ({ activity }) => {
     const navigate = useNavigate();
+    const canResubmit = activity.status === 'Rejected';
+
     return (
-    <div 
-        onClick={() => navigate('/submit', { state: { cloneActivity: activity } })}
+    <div
+        onClick={() => navigate('/submit', { state: { viewActivity: activity } })}
         style={{
         minWidth: '250px',
         maxWidth: '250px',
@@ -36,6 +38,9 @@ const ActivityCard = ({ activity }) => {
         <p style={{ fontSize: '0.875rem', color: '#475569', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={activity.description}>
             {activity.description}
         </p>
+        <div style={{ marginTop: 'auto', paddingTop: '0.5rem', fontSize: '0.8rem', color: canResubmit ? '#b91c1c' : '#64748b', fontWeight: '600' }}>
+            {canResubmit ? 'View activity. Rejected items can be modified and submitted again.' : 'View activity details'}
+        </div>
     </div>
     );
 };

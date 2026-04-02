@@ -254,10 +254,14 @@ const setupPassword = async (req, res, next) => {
 
 const adminCreateUser = async (req, res, next) => {
     try {
-        const { first_name, last_name, email, department_id } = req.body;
+        const { first_name, last_name, email, role, designation, department_id } = req.body;
         
-        if (!first_name || !last_name || !email) {
-            return res.status(400).json({ message: 'First name, last name, and email are required' });
+        if (!first_name || !last_name || !email || !role || !designation) {
+            return res.status(400).json({ message: 'First name, last name, email, role, and track / designation are required' });
+        }
+
+        if (!['Admin', 'HOD', 'Faculty'].includes(role)) {
+            return res.status(400).json({ message: 'Invalid role selected' });
         }
 
         const userExists = await UserModel.findByEmail(email);
@@ -267,11 +271,12 @@ const adminCreateUser = async (req, res, next) => {
 
         const userData = {
             department_id: department_id || null,
+            designation,
             first_name,
             last_name,
             email,
             password_hash: null, // First-time login will trigger setup
-            role: 'Faculty',
+            role,
             otp: null,
             otp_expires_at: null
         };

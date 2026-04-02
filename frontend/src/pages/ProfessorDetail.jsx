@@ -50,12 +50,12 @@ const CategoryAccordion = ({ title, category, activities, narrative, onReview })
                                         {activity.status === 'Pending' && (
                                             <>
                                                 <button
-                                                    onClick={() => onReview(activity.id, 'Approved', activity.significance)}
+                                                    onClick={() => onReview(activity.id, 'Approved')}
                                                     style={{ padding: '0.25rem 0.75rem', background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}>
                                                     <Check size={14} /> Accept
                                                 </button>
                                                 <button
-                                                    onClick={() => onReview(activity.id, 'Rejected', activity.significance)}
+                                                    onClick={() => onReview(activity.id, 'Rejected')}
                                                     style={{ padding: '0.25rem 0.75rem', background: 'white', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}>
                                                     <X size={14} /> Reject
                                                 </button>
@@ -120,8 +120,9 @@ const ProfessorDetail = () => {
         // eslint-disable-next-line
     }, [id]);
 
-    const handleReview = async (activityId, status, significance) => {
-        const assigned_score = significance === 'Major' ? 10 : significance === 'Significant' ? 5 : 2; // Arbitrary fallback scores for the payload, API ignores them now
+    const handleReview = async (activityId, status) => {
+        const activity = activities.find((item) => item.id === activityId);
+        const assigned_score = status === 'Approved' ? (activity?.suggested_score || 0) : 0;
         try {
             await api.put(`/activities/${activityId}/review`, { status, review_comments: '', assigned_score });
             // Re-fetch data to update UI and Score

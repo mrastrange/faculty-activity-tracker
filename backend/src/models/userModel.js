@@ -20,13 +20,13 @@ class UserModel {
     }
 
     static async create(userData) {
-        const { department_id, first_name, last_name, email, password_hash, role, otp, otp_expires_at } = userData;
+        const { department_id, designation, qualification, first_name, last_name, email, password_hash, role, otp, otp_expires_at } = userData;
         const query = `
-            INSERT INTO users (department_id, first_name, last_name, email, password_hash, role, otp, otp_expires_at, is_verified)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
-            RETURNING id, first_name, last_name, email, role, department_id, is_verified;
+            INSERT INTO users (department_id, designation, qualification, first_name, last_name, email, password_hash, role, otp, otp_expires_at, is_verified)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false)
+            RETURNING id, first_name, last_name, email, role, department_id, designation, qualification, is_verified;
         `;
-        const values = [department_id, first_name, last_name, email, password_hash, role, otp, otp_expires_at];
+        const values = [department_id, designation || null, qualification || null, first_name, last_name, email, password_hash, role, otp, otp_expires_at];
         const { rows } = await pool.query(query, values);
         return rows[0];
     }

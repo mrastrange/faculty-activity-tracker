@@ -8,12 +8,14 @@ const {
     getMyActivities,
     getDepartmentActivities,
     getAllActivities,
-    reviewActivity
+    reviewActivity,
+    resubmitActivity
 } = require('../controllers/activityController');
 
 // Faculty Routes
 router.post('/', protect, authorizeRoles('Faculty', 'HOD', 'Admin'), upload.single('proof_document'), submitActivity);
 router.get('/', protect, authorizeRoles('Faculty', 'HOD', 'Admin'), getMyActivities);
+router.put('/:id/resubmit', protect, authorizeRoles('Faculty', 'HOD', 'Admin'), upload.single('proof_document'), resubmitActivity);
 
 // HOD Routes
 router.get('/department', protect, authorizeRoles('HOD', 'Admin'), getDepartmentActivities);

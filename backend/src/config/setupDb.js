@@ -70,6 +70,8 @@ async function setupDatabase() {
           description TEXT,
           date_of_activity DATE NOT NULL,
           proof_document_path VARCHAR(255), -- Made optional for now based on UI
+          quantity INT DEFAULT 1,
+          suggested_score DECIMAL(7, 2) DEFAULT 0,
           status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
           assigned_score DECIMAL(7, 2),
           reviewer_id INT REFERENCES users(id) ON DELETE SET NULL,
@@ -89,6 +91,9 @@ async function setupDatabase() {
           faculty_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           academic_year VARCHAR(20) NOT NULL,
           total_score DECIMAL(7, 2) DEFAULT 0,
+          teaching_score DECIMAL(7, 2) DEFAULT 0,
+          co_curricular_score DECIMAL(7, 2) DEFAULT 0,
+          research_score DECIMAL(7, 2) DEFAULT 0,
           last_recalculated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           PRIMARY KEY (faculty_id, academic_year)
       );

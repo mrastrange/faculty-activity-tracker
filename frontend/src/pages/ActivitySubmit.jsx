@@ -8,17 +8,20 @@ const ActivitySubmit = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
-    const cloneData = location.state?.cloneActivity;
+    const selectedActivity = location.state?.viewActivity || location.state?.cloneActivity || null;
+    const isViewMode = Boolean(location.state?.viewActivity);
+    const isRejectedActivity = selectedActivity?.status === 'Rejected';
 
     const [formData, setFormData] = useState({
-        title: cloneData?.title || '',
-        category: cloneData?.category || 'Teaching',
+        title: selectedActivity?.title || '',
+        category: selectedActivity?.category || 'Teaching',
         activityType: 'lectures',
-        description: cloneData?.description || '',
-        quantity: cloneData?.quantity || 1,
-        semester: cloneData?.semester || '',
-        proofLink: cloneData?.proof_document_path || ''
+        description: selectedActivity?.description || '',
+        quantity: selectedActivity?.quantity || 1,
+        semester: selectedActivity?.semester || '',
+        proofLink: selectedActivity?.proof_document_path || ''
     });
+    const [isEditingRejected, setIsEditingRejected] = useState(!isViewMode);
 
     const UGC_GUIDELINES = {
         'Teaching': [
@@ -45,6 +48,7 @@ const ActivitySubmit = () => {
 
     const selectedUgcItem = UGC_GUIDELINES[formData.category]?.find(item => item.id === formData.activityType);
     const suggestedScore = selectedUgcItem ? selectedUgcItem.points * formData.quantity : 0;
+    const isReadOnly = isViewMode && !isEditingRejected;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -78,14 +82,21 @@ const ActivitySubmit = () => {
             data.append('semester', formData.semester);
             data.append('description', formData.description);
             data.append('quantity', formData.quantity);
+            data.append('suggested_score', suggestedScore);
             // Send proof_link explicitly
             if (formData.proofLink) {
                 data.append('proof_link', formData.proofLink);
             }
 
-            await api.post('/activities', data, {
-                headers: { 'Content-Type': 'multipart/form-data' } 
-            });
+            if (selectedActivity?.id && isRejectedActivity) {
+                await api.put(`/activities/${selectedActivity.id}/resubmit`, data, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                await api.post('/activities', data, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to submit activity.');
@@ -104,7 +115,14 @@ const ActivitySubmit = () => {
                         <Link to="/" style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', textDecoration: 'none', marginBottom: '1rem' }}>
                             <ArrowLeft size={16} style={{ marginRight: '0.5rem' }} /> Back to Dashboard
                         </Link>
-                        <h1 style={{ fontSize: '1.75rem', color: '#0f172a', fontWeight: 'bold' }}>New Activity - {formData.category}</h1>
+                        <h1 style={{ fontSize: '1.75rem', color: '#0f172a', fontWeight: 'bold' }}>
+                            {isViewMode ? 'Activity Details' : 'New Activity'} - {formData.category}
+                        </h1>
+                        {selectedActivity?.status && (
+                            <p style={{ margin: '0.5rem 0 0', color: isRejectedActivity ? '#b91c1c' : '#64748b', fontWeight: '600' }}>
+                                Status: {selectedActivity.status}
+                            </p>
+                        )}
                     </div>
 
                     {error && <div className="alert-error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -118,6 +136,7 @@ const ActivitySubmit = () => {
                                 className="form-input"
                                 value={formData.category}
                                 onChange={handleInputChange}
+                                disabled={isReadOnly}
                                 style={{ maxWidth: '250px' }}
                             >
                                 <option value="Teaching">Teaching</option>
@@ -134,6 +153,7 @@ const ActivitySubmit = () => {
                                 className="form-input"
                                 value={formData.activityType}
                                 onChange={handleInputChange}
+                                disabled={isReadOnly}
                                 style={{ maxWidth: '400px' }}
                             >
                                 {UGC_GUIDELINES[formData.category === 'Co-curricular / Admin' ? 'Co-curricular' : formData.category === 'Research & Academic' ? 'Research' : formData.category]?.map(item => (
@@ -153,6 +173,7 @@ const ActivitySubmit = () => {
                                 className="form-input"
                                 value={formData.quantity}
                                 onChange={handleQuantityChange}
+                                disabled={isReadOnly}
                                 style={{ maxWidth: '100px' }}
                             />
                         </div>
@@ -168,6 +189,7 @@ const ActivitySubmit = () => {
                                 placeholder="Created a new XR class"
                                 value={formData.title}
                                 onChange={handleInputChange}
+                                readOnly={isReadOnly}
                                 style={{ maxWidth: '400px' }}
                             />
                         </div>
@@ -182,6 +204,7 @@ const ActivitySubmit = () => {
                                 placeholder="e.g. Fall 2026, Spring 2026"
                                 value={formData.semester}
                                 onChange={handleInputChange}
+                                readOnly={isReadOnly}
                                 style={{ maxWidth: '400px' }}
                             />
                         </div>
@@ -195,6 +218,7 @@ const ActivitySubmit = () => {
                                 className="form-input"
                                 value={formData.description}
                                 onChange={handleInputChange}
+                                readOnly={isReadOnly}
                                 placeholder="- Conducted research..."
                             />
                         </div>
@@ -209,6 +233,7 @@ const ActivitySubmit = () => {
                                 placeholder="https://drive.google.com/..."
                                 value={formData.proofLink}
                                 onChange={handleInputChange}
+                                readOnly={isReadOnly}
                             />
                         </div>
 
@@ -216,9 +241,23 @@ const ActivitySubmit = () => {
                             <button type="button" className="btn" style={{ border: '1px solid #cbd5e1', background: 'white' }} onClick={() => navigate('/')}>
                                 Back
                             </button>
-                            <button type="submit" className="btn btn-primary" style={{ background: '#b91c1c', border: 'none', padding: '0.75rem 2rem' }} disabled={isSubmitting}>
-                                {isSubmitting ? 'Saving...' : 'Submit'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                {isViewMode && isRejectedActivity && !isEditingRejected && (
+                                    <button
+                                        type="button"
+                                        className="btn"
+                                        style={{ background: '#b91c1c', color: 'white', border: 'none', padding: '0.75rem 1.5rem' }}
+                                        onClick={() => setIsEditingRejected(true)}
+                                    >
+                                        Modify and Submit Again
+                                    </button>
+                                )}
+                                {(!isViewMode || isEditingRejected) && (
+                                    <button type="submit" className="btn btn-primary" style={{ background: '#b91c1c', border: 'none', padding: '0.75rem 2rem' }} disabled={isSubmitting}>
+                                        {isSubmitting ? 'Saving...' : selectedActivity?.id && isRejectedActivity ? 'Submit Again' : 'Submit'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </form>
                 </div>

@@ -2,13 +2,12 @@ const pool = require('../config/db');
 
 class ApiScoreModel {
     static async recalculateFacultyScore(faculty_id, academic_year) {
-        // Step A: The Aggregation Query
         const sumQuery = `
             SELECT 
-                COALESCE(SUM(assigned_score)::int, 0) as total_score,
-                COALESCE(SUM(CASE WHEN category = 'Teaching' THEN assigned_score ELSE 0 END)::int, 0) as teaching_score,
-                COALESCE(SUM(CASE WHEN category = 'Co-curricular' THEN assigned_score ELSE 0 END)::int, 0) as co_curricular_score,
-                COALESCE(SUM(CASE WHEN category = 'Research' THEN assigned_score ELSE 0 END)::int, 0) as research_score
+                COALESCE(SUM(assigned_score), 0) as total_score,
+                COALESCE(SUM(CASE WHEN category = 'Teaching' THEN assigned_score ELSE 0 END), 0) as teaching_score,
+                COALESCE(SUM(CASE WHEN category IN ('Co-curricular', 'Service') THEN assigned_score ELSE 0 END), 0) as co_curricular_score,
+                COALESCE(SUM(CASE WHEN category = 'Research' THEN assigned_score ELSE 0 END), 0) as research_score
             FROM activities
             WHERE faculty_id = $1 
               AND status = 'Approved'
@@ -20,7 +19,6 @@ class ApiScoreModel {
         const co_curricular_score = sumRows[0].co_curricular_score;
         const research_score = sumRows[0].research_score;
 
-        // Step B: The "Upsert" Operation
         const upsertQuery = `
             INSERT INTO api_scores (faculty_id, academic_year, total_score, teaching_score, co_curricular_score, research_score, last_recalculated)
             VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
@@ -44,6 +42,19 @@ class ApiScoreModel {
         `;
         const { rows } = await pool.query(query, [faculty_id, academic_year]);
         return rows[0];
+    }
+
+    static async recalculateAllScoresForYear(academic_year) {
+        const facultyQuery = `
+            SELECT DISTINCT faculty_id
+            FROM activities
+            WHERE TO_CHAR(date_of_activity, 'YYYY') = $1;
+        `;
+        const { rows } = await pool.query(facultyQuery, [academic_year]);
+
+        for (const row of rows) {
+            await this.recalculateFacultyScore(row.faculty_id, academic_year);
+        }
     }
 }
 

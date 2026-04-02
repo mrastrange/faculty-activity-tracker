@@ -210,7 +210,7 @@ const HODDashboard = () => {
                                             </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                    <button onClick={() => handleReview(activity.id, 'Approved', activity.api_weightage || 10)} className="btn" style={{ background: 'var(--success)', color: 'white', padding: '0.5rem 1rem' }}>
+                                                    <button onClick={() => handleReview(activity.id, 'Approved', activity.suggested_score || 0)} className="btn" style={{ background: 'var(--success)', color: 'white', padding: '0.5rem 1rem' }}>
                                                         <Check size={16} style={{ display: 'inline', marginRight: '4px' }} /> Approve
                                                     </button>
                                                     <button onClick={() => handleReview(activity.id, 'Rejected', 0)} className="btn" style={{ background: 'var(--danger)', color: 'white', padding: '0.5rem 1rem' }}>

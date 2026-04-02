@@ -9,7 +9,7 @@ const AdminDashboard = () => {
     const { user, logout } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('analytics'); // 'analytics', 'approvals', 'reports', 'users'
     const [showUserModal, setShowUserModal] = useState(false);
-    const [newUserForm, setNewUserForm] = useState({ first_name: '', last_name: '', email: '', department_id: '' });
+    const [newUserForm, setNewUserForm] = useState({ first_name: '', last_name: '', email: '', role: 'Faculty', designation: '', department_id: '' });
     const [analytics, setAnalytics] = useState(null);
     const [allActivities, setAllActivities] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
@@ -59,7 +59,7 @@ const AdminDashboard = () => {
             await api.post('/auth/admin/users', newUserForm);
             alert('User created successfully');
             setShowUserModal(false);
-            setNewUserForm({ first_name: '', last_name: '', email: '', department_id: '' });
+            setNewUserForm({ first_name: '', last_name: '', email: '', role: 'Faculty', designation: '', department_id: '' });
             fetchData(); // Refresh users
         } catch (err) {
             alert(err.response?.data?.message || 'Error creating user');
@@ -439,7 +439,19 @@ const AdminDashboard = () => {
                                     <input type="email" value={newUserForm.email} onChange={(e) => setNewUserForm({...newUserForm, email: e.target.value})} required style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
                                 </div>
                                 <div style={{ marginBottom: '1rem' }}>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>Department ID</label>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>Role</label>
+                                    <select value={newUserForm.role} onChange={(e) => setNewUserForm({...newUserForm, role: e.target.value})} required style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                                        <option value="Faculty">Faculty</option>
+                                        <option value="HOD">HOD</option>
+                                        <option value="Admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>Track / Designation</label>
+                                    <input type="text" value={newUserForm.designation} onChange={(e) => setNewUserForm({...newUserForm, designation: e.target.value})} required style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>Department ID (optional)</label>
                                     <input type="text" value={newUserForm.department_id} onChange={(e) => setNewUserForm({...newUserForm, department_id: e.target.value})} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>

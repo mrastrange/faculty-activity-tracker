@@ -1,4 +1,5 @@
 const ActivityModel = require('../models/activityModel');
+const ApiScoreModel = require('../models/apiScoreModel');
 const UserModel = require('../models/userModel');
 const { sendApprovalEmail } = require('../utils/emailService');
 
@@ -65,6 +66,50 @@ const getAllActivities = async (req, res, next) => {
     }
 };
 
+const resubmitActivity = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { category, significance, semester, title, description, date_of_activity, quantity, suggested_score, proof_link } = req.body;
+        const faculty_id = req.user.id;
+
+        if (!title || !category || !significance) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const existingActivity = await ActivityModel.getByIdForFaculty(id, faculty_id);
+        if (!existingActivity) {
+            return res.status(404).json({ message: 'Activity not found' });
+        }
+
+        if (existingActivity.status !== 'Rejected') {
+            return res.status(400).json({ message: 'Only rejected activities can be modified and resubmitted' });
+        }
+
+        const proof_document_path = req.file
+            ? `uploads/${req.file.filename}`
+            : proof_link || existingActivity.proof_document_path || null;
+
+        const activityDate = date_of_activity || existingActivity.date_of_activity || new Date().toISOString().split('T')[0];
+
+        const activityData = {
+            category,
+            significance,
+            semester,
+            title,
+            description,
+            date_of_activity: activityDate,
+            proof_document_path,
+            quantity: quantity ? parseInt(quantity, 10) : existingActivity.quantity || 1,
+            suggested_score: suggested_score ? parseInt(suggested_score, 10) : existingActivity.suggested_score || 0
+        };
+
+        const activity = await ActivityModel.resubmit(id, faculty_id, activityData);
+        res.status(200).json(activity);
+    } catch (error) {
+        next(error);
+    }
+};
+
 const reviewActivity = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -83,12 +128,10 @@ const reviewActivity = async (req, res, next) => {
             return res.status(404).json({ message: 'Activity not found' });
         }
 
-        // Call API Score recalculation utility here as per API_CALCULATION_LOGIC.md
-        if (status === 'Approved') {
-            const ApiScoreModel = require('../models/apiScoreModel');
-            const activityYear = new Date(updatedActivity.date_of_activity).getFullYear().toString();
-            await ApiScoreModel.recalculateFacultyScore(updatedActivity.faculty_id, activityYear);
+        const activityYear = new Date(updatedActivity.date_of_activity).getFullYear().toString();
+        await ApiScoreModel.recalculateFacultyScore(updatedActivity.faculty_id, activityYear);
 
+        if (status === 'Approved') {
             // Automate the Approval Email Notification to the Faculty
             try {
                 const facultyUser = await UserModel.findById(updatedActivity.faculty_id);
@@ -118,5 +161,6 @@ module.exports = {
     getMyActivities,
     getDepartmentActivities,
     getAllActivities,
-    reviewActivity
+    reviewActivity,
+    resubmitActivity
 };

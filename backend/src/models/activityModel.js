@@ -24,6 +24,17 @@ class ActivityModel {
         return rows;
     }
 
+    static async getByIdForFaculty(activity_id, faculty_id) {
+        const query = `
+            SELECT *
+            FROM activities
+            WHERE id = $1 AND faculty_id = $2
+            LIMIT 1;
+        `;
+        const { rows } = await pool.query(query, [activity_id, faculty_id]);
+        return rows[0];
+    }
+
     static async getByDepartment(department_id) {
         const query = `
             SELECT a.*, u.first_name, u.last_name
@@ -55,6 +66,44 @@ class ActivityModel {
             RETURNING *;
         `;
         const values = [status, reviewer_id, review_comments, assigned_score, activity_id];
+        const { rows } = await pool.query(query, values);
+        return rows[0];
+    }
+
+    static async resubmit(activity_id, faculty_id, activityData) {
+        const { category, significance, semester, title, description, date_of_activity, proof_document_path, quantity, suggested_score } = activityData;
+        const query = `
+            UPDATE activities
+            SET category = $1,
+                significance = $2,
+                semester = $3,
+                title = $4,
+                description = $5,
+                date_of_activity = $6,
+                proof_document_path = $7,
+                quantity = $8,
+                suggested_score = $9,
+                status = 'Pending',
+                assigned_score = NULL,
+                reviewer_id = NULL,
+                reviewer_comments = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $10 AND faculty_id = $11
+            RETURNING *;
+        `;
+        const values = [
+            category,
+            significance,
+            semester,
+            title,
+            description,
+            date_of_activity,
+            proof_document_path,
+            quantity || 1,
+            suggested_score || 0,
+            activity_id,
+            faculty_id
+        ];
         const { rows } = await pool.query(query, values);
         return rows[0];
     }

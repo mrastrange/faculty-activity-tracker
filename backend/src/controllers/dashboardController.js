@@ -1,9 +1,12 @@
 const pool = require('../config/db');
+const ApiScoreModel = require('../models/apiScoreModel');
 
 const getFacultyDashboard = async (req, res, next) => {
     try {
         const faculty_id = req.user.id;
         const currentYear = new Date().getFullYear().toString();
+
+        await ApiScoreModel.recalculateFacultyScore(faculty_id, currentYear);
 
         // Get total score statically from api_scores cache
         const scoreQuery = `SELECT total_score, teaching_score, co_curricular_score, research_score FROM api_scores WHERE faculty_id = $1 AND academic_year = $2`;
@@ -26,7 +29,7 @@ const getFacultyDashboard = async (req, res, next) => {
 
         // Get recent activities
         const recentQuery = `
-            SELECT a.id, a.title, a.category, a.significance, a.description, a.status, a.date_of_activity
+            SELECT a.id, a.title, a.category, a.significance, a.description, a.status, a.date_of_activity, a.assigned_score, a.quantity, a.suggested_score, a.semester, a.proof_document_path
             FROM activities a
             WHERE a.faculty_id = $1
             ORDER BY a.submitted_at DESC
@@ -52,19 +55,23 @@ const getFacultyDashboard = async (req, res, next) => {
 
 const getAdminAnalytics = async (req, res, next) => {
     try {
+        const currentYear = new Date().getFullYear().toString();
+        await ApiScoreModel.recalculateAllScoresForYear(currentYear);
+
         // College-wide average API score
-        const avgScoreQuery = `SELECT AVG(total_score) as average_score FROM api_scores`;
-        const avgResult = await pool.query(avgScoreQuery);
+        const avgScoreQuery = `SELECT AVG(total_score) as average_score FROM api_scores WHERE academic_year = $1`;
+        const avgResult = await pool.query(avgScoreQuery, [currentYear]);
 
         // Top 5 faculty overall
         const topFacultyQuery = `
             SELECT u.first_name, u.last_name, s.total_score, s.teaching_score, s.co_curricular_score, s.research_score, s.academic_year
             FROM api_scores s
             JOIN users u ON s.faculty_id = u.id
+            WHERE s.academic_year = $1
             ORDER BY s.total_score DESC
             LIMIT 5
         `;
-        const topFacultyResult = await pool.query(topFacultyQuery);
+        const topFacultyResult = await pool.query(topFacultyQuery, [currentYear]);
 
         // Department-wise sum of scores
         const deptScoresQuery = `
@@ -72,12 +79,13 @@ const getAdminAnalytics = async (req, res, next) => {
             FROM api_scores s
             JOIN users u ON s.faculty_id = u.id
             JOIN departments d ON u.department_id = d.id
+            WHERE s.academic_year = $1
             GROUP BY d.name
         `;
-        const deptScoresResult = await pool.query(deptScoresQuery);
+        const deptScoresResult = await pool.query(deptScoresQuery, [currentYear]);
 
         res.status(200).json({
-            collegeAverage: parseFloat(avgResult.rows[0].average_score).toFixed(2) || 0,
+            collegeAverage: avgResult.rows[0].average_score ? parseFloat(avgResult.rows[0].average_score).toFixed(2) : '0.00',
             topPerformers: topFacultyResult.rows,
             departmentComparisons: deptScoresResult.rows
         });
