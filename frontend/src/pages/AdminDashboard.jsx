@@ -8,6 +8,8 @@ import { ActivityDonutChart, CategoryStackedBar } from '../components/VisualChar
 const AdminDashboard = () => {
     const { user, logout } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('analytics'); // 'analytics', 'approvals', 'reports', 'users'
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [newUserForm, setNewUserForm] = useState({ first_name: '', last_name: '', email: '', department_id: '' });
     const [analytics, setAnalytics] = useState(null);
     const [allActivities, setAllActivities] = useState([]);
     const [allUsers, setAllUsers] = useState([]);
@@ -48,6 +50,19 @@ const AdminDashboard = () => {
             fetchData();
         } catch (err) {
             alert('Failed to review activity');
+        }
+    };
+
+    const handleCreateUser = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/auth/admin/users', newUserForm);
+            alert('User created successfully');
+            setShowUserModal(false);
+            setNewUserForm({ first_name: '', last_name: '', email: '', department_id: '' });
+            fetchData(); // Refresh users
+        } catch (err) {
+            alert(err.response?.data?.message || 'Error creating user');
         }
     };
 
@@ -271,9 +286,13 @@ const AdminDashboard = () => {
                                             <td>{new Date(activity.date_of_activity).toLocaleDateString()}</td>
                                             <td style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{activity.suggested_score} pts</td>
                                             <td>
-                                                <a href={`http://localhost:5000/${activity.proof_document_path}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
-                                                    View Document
-                                                </a>
+                                                {activity.proof_document_path ? (
+                                                    <a href={activity.proof_document_path.startsWith('http') ? activity.proof_document_path : `http://localhost:5000/${activity.proof_document_path}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+                                                        View Document
+                                                    </a>
+                                                ) : (
+                                                    <span style={{ color: 'var(--text-muted)' }}>No Document</span>
+                                                )}
                                             </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -350,7 +369,7 @@ const AdminDashboard = () => {
                     <div className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h2 style={{ margin: 0 }}>Faculty & User Directory</h2>
-                            <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <button onClick={() => setShowUserModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Users size={18} /> Add New User
                             </button>
                         </div>
@@ -398,6 +417,36 @@ const AdminDashboard = () => {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {showUserModal && (
+                    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                        <div className="card" style={{ width: '400px', maxWidth: '90%' }}>
+                            <h2>Create New Faculty/User</h2>
+                            <form onSubmit={handleCreateUser}>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>First Name</label>
+                                    <input type="text" value={newUserForm.first_name} onChange={(e) => setNewUserForm({...newUserForm, first_name: e.target.value})} required style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>Last Name</label>
+                                    <input type="text" value={newUserForm.last_name} onChange={(e) => setNewUserForm({...newUserForm, last_name: e.target.value})} required style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
+                                    <input type="email" value={newUserForm.email} onChange={(e) => setNewUserForm({...newUserForm, email: e.target.value})} required style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>Department ID</label>
+                                    <input type="text" value={newUserForm.department_id} onChange={(e) => setNewUserForm({...newUserForm, department_id: e.target.value})} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                                    <button type="button" onClick={() => setShowUserModal(false)} className="btn" style={{ background: 'transparent', border: '1px solid var(--border)' }}>Cancel</button>
+                                    <button type="submit" className="btn btn-primary">Create User</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}

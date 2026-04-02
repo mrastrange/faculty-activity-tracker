@@ -252,6 +252,37 @@ const setupPassword = async (req, res, next) => {
     }
 };
 
+const adminCreateUser = async (req, res, next) => {
+    try {
+        const { first_name, last_name, email, department_id } = req.body;
+        
+        if (!first_name || !last_name || !email) {
+            return res.status(400).json({ message: 'First name, last name, and email are required' });
+        }
+
+        const userExists = await UserModel.findByEmail(email);
+        if (userExists) {
+            return res.status(400).json({ message: 'User already exists' });
+        }
+
+        const userData = {
+            department_id: department_id || null,
+            first_name,
+            last_name,
+            email,
+            password_hash: null, // First-time login will trigger setup
+            role: 'Faculty',
+            otp: null,
+            otp_expires_at: null
+        };
+
+        const user = await UserModel.create(userData);
+        res.status(201).json({ message: 'User created successfully', user });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const getAllUsers = async (req, res, next) => {
     try {
         const UserModel = require('../models/userModel');
@@ -269,5 +300,6 @@ module.exports = {
     getMe,
     checkEmail,
     setupPassword,
-    getAllUsers
+    getAllUsers,
+    adminCreateUser
 };

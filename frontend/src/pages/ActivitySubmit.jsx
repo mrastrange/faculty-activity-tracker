@@ -1,21 +1,23 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { ArrowLeft, UploadCloud } from 'lucide-react';
 
 const ActivitySubmit = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
+    const cloneData = location.state?.cloneActivity;
 
     const [formData, setFormData] = useState({
-        title: '',
-        category: 'Teaching',
+        title: cloneData?.title || '',
+        category: cloneData?.category || 'Teaching',
         activityType: 'lectures',
-        description: '',
-        quantity: 1,
-        semester: '',
-        proofLink: ''
+        description: cloneData?.description || '',
+        quantity: cloneData?.quantity || 1,
+        semester: cloneData?.semester || '',
+        proofLink: cloneData?.proof_document_path || ''
     });
 
     const UGC_GUIDELINES = {

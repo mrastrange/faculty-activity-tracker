@@ -2,11 +2,15 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { Award, CheckCircle, Clock, XCircle, Plus, ChevronRight, ChevronLeft, Printer } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ActivityDonutChart, CategoryStackedBar } from '../components/VisualCharts';
 
-const ActivityCard = ({ activity }) => (
-    <div style={{
+const ActivityCard = ({ activity }) => {
+    const navigate = useNavigate();
+    return (
+    <div 
+        onClick={() => navigate('/submit', { state: { cloneActivity: activity } })}
+        style={{
         minWidth: '250px',
         maxWidth: '250px',
         padding: '1.25rem',
@@ -16,7 +20,8 @@ const ActivityCard = ({ activity }) => (
         border: '1px solid #e2e8f0',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem'
+        gap: '0.5rem',
+        cursor: 'pointer'
     }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#64748b' }}>
             <span>{new Date(activity.date_of_activity).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -32,7 +37,8 @@ const ActivityCard = ({ activity }) => (
             {activity.description}
         </p>
     </div>
-);
+    );
+};
 
 const EmptyAddCard = ({ category, significance }) => (
     <Link to="/submit" style={{ textDecoration: 'none' }}>
@@ -443,7 +449,7 @@ const FacultyDashboard = () => {
                                         <tbody>
                                             {activities.length > 0 ? activities.map(a => (
                                                 <tr key={a.id}>
-                                                    <td>{new Date(a.submitted_at).toLocaleDateString()}</td>
+                                                    <td>{new Date(a.date_of_activity || a.submitted_at).toLocaleDateString()}</td>
                                                     <td style={{ fontWeight: '500', color: '#312e81' }}>{a.title}</td>
                                                     <td>{a.category}</td>
                                                     <td>
