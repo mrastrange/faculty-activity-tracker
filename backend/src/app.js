@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../backend/.env') });
+require('dotenv').config();
 
 const { errorHandler } = require('./middlewares/errorHandler');
 
