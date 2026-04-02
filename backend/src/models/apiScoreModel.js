@@ -1,10 +1,15 @@
 const pool = require('../config/db');
 
+const CATEGORY_CAPS = {
+    teaching: 100,
+    coCurricular: 30,
+    research: 100
+};
+
 class ApiScoreModel {
     static async recalculateFacultyScore(faculty_id, academic_year) {
         const sumQuery = `
             SELECT 
-                COALESCE(SUM(assigned_score)::int, 0) as total_score,
                 COALESCE(SUM(CASE WHEN category = 'Teaching' THEN assigned_score ELSE 0 END)::int, 0) as teaching_score,
                 COALESCE(SUM(CASE WHEN category IN ('Co-curricular', 'Service') THEN assigned_score ELSE 0 END)::int, 0) as co_curricular_score,
                 COALESCE(SUM(CASE WHEN category = 'Research' THEN assigned_score ELSE 0 END)::int, 0) as research_score
@@ -14,10 +19,14 @@ class ApiScoreModel {
               AND TO_CHAR(date_of_activity, 'YYYY') = $2;
         `;
         const { rows: sumRows } = await pool.query(sumQuery, [faculty_id, academic_year]);
-        const total_score = parseInt(sumRows[0].total_score, 10) || 0;
-        const teaching_score = parseInt(sumRows[0].teaching_score, 10) || 0;
-        const co_curricular_score = parseInt(sumRows[0].co_curricular_score, 10) || 0;
-        const research_score = parseInt(sumRows[0].research_score, 10) || 0;
+        const rawTeachingScore = parseInt(sumRows[0].teaching_score, 10) || 0;
+        const rawCoCurricularScore = parseInt(sumRows[0].co_curricular_score, 10) || 0;
+        const rawResearchScore = parseInt(sumRows[0].research_score, 10) || 0;
+
+        const teaching_score = Math.min(rawTeachingScore, CATEGORY_CAPS.teaching);
+        const co_curricular_score = Math.min(rawCoCurricularScore, CATEGORY_CAPS.coCurricular);
+        const research_score = Math.min(rawResearchScore, CATEGORY_CAPS.research);
+        const total_score = teaching_score + co_curricular_score + research_score;
 
         const upsertQuery = `
             INSERT INTO api_scores (faculty_id, academic_year, total_score, teaching_score, co_curricular_score, research_score, last_recalculated)
