@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 const sendVerificationEmail = async (toEmail, otpCode) => {
     try {
         const mailOptions = {
-            from: 'abijithtest1234@gmail.com',
+            from: 'facultyactivityadmin@gmail.com',
             to: toEmail,
             subject: 'Verify Your Faculty Tracker Account',
             html: `
@@ -45,7 +45,7 @@ const sendVerificationEmail = async (toEmail, otpCode) => {
 const sendApprovalEmail = async (toEmail, activityTitle, category, significance, score) => {
     try {
         const mailOptions = {
-            from: 'abijithtest1234@gmail.com',
+            from: 'facultyactivityadmin@gmail.com',
             to: toEmail,
             subject: 'Activity Approved - Merit Score Updated',
             html: `
