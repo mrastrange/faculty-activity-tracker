@@ -26,7 +26,9 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/activities', activityRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/narratives', narrativeRoutes);
-
+app.get("/", (req, res) => {
+    res.send("Faculty Activity Tracker API running");
+});
 // Error Handling Middleware
 app.use(errorHandler);
 
