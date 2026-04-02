@@ -4,14 +4,14 @@ const { sendApprovalEmail } = require('../utils/emailService');
 
 const submitActivity = async (req, res, next) => {
     try {
-        const { category, significance, semester, title, description, date_of_activity, quantity, suggested_score } = req.body;
+        const { category, significance, semester, title, description, date_of_activity, quantity, suggested_score, proof_link } = req.body;
         const faculty_id = req.user.id;
 
         if (!title || !category || !significance) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        const proof_document_path = req.file ? `uploads/${req.file.filename}` : null;
+        const proof_document_path = req.file ? `uploads/${req.file.filename}` : proof_link || null;
 
         // Provide a default date if not passed, because UI screenshot didn't strictly show a Date input
         const activityDate = date_of_activity || new Date().toISOString().split('T')[0];

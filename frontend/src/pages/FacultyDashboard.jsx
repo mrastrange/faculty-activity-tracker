@@ -309,28 +309,6 @@ const FacultyDashboard = () => {
                     <Link to="/submit" style={{ padding: '0.75rem 2rem', cursor: 'pointer', color: '#0f172a', fontWeight: '600', textDecoration: 'none', borderBottom: '1px solid #e2e8f0', marginBottom: '1rem' }}>
                         Submit a New Activity
                     </Link>
-
-                    <div style={{ padding: '0.5rem 2rem', color: '#0f172a', fontWeight: 'bold', marginBottom: '0.5rem' }}>Submissions</div>
-
-                    {/* Inner Links for Categories */}
-                    <div
-                        onClick={() => setActiveTab('Teaching')}
-                        style={{ padding: '0.5rem 2rem 0.5rem 3rem', cursor: 'pointer', color: activeTab === 'Teaching' ? '#f2722b' : '#64748b', borderRight: activeTab === 'Teaching' ? '3px solid #f2722b' : 'none', fontWeight: activeTab === 'Teaching' ? '600' : 'normal' }}
-                    >
-                        Teaching
-                    </div>
-                    <div
-                        onClick={() => setActiveTab('Research')}
-                        style={{ padding: '0.5rem 2rem 0.5rem 3rem', cursor: 'pointer', color: activeTab === 'Research' ? '#f2722b' : '#64748b', borderRight: activeTab === 'Research' ? '3px solid #f2722b' : 'none', fontWeight: activeTab === 'Research' ? '600' : 'normal' }}
-                    >
-                        Research
-                    </div>
-                    <div
-                        onClick={() => setActiveTab('Service')}
-                        style={{ padding: '0.5rem 2rem 0.5rem 3rem', cursor: 'pointer', color: activeTab === 'Service' ? '#f2722b' : '#64748b', borderRight: activeTab === 'Service' ? '3px solid #f2722b' : 'none', fontWeight: activeTab === 'Service' ? '600' : 'normal' }}
-                    >
-                        Service
-                    </div>
                 </nav>
 
                 <div style={{ marginTop: 'auto', padding: '0 2rem' }}>
@@ -369,19 +347,15 @@ const FacultyDashboard = () => {
                     </div>
                 )}
 
-                {activeTab === 'Profile' && <ProfileView user={user} />}
-
-                {/* Standard Edit Categories */}
-                {(activeTab === 'Teaching' || activeTab === 'Research' || activeTab === 'Service') && (
+                {activeTab === 'Profile' && (
                     <>
-                        <NarrativeEditor category={activeTab} currentYear={new Date().getFullYear().toString()} />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-                            <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a' }}>Logged Activities</h2>
-                            <span className="badge badge-pending">{filteredActivities.length} Total</span>
+                        <ProfileView user={user} />
+                        <div style={{ marginTop: '3rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', margin: '0 0 2rem 0', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>My Activities</h2>
+                            <HorizontalScrollRow title="Teaching Activities" activities={activities.filter(a => a.category === 'Teaching')} category="Teaching" significance="Minor" />
+                            <HorizontalScrollRow title="Research Activities" activities={activities.filter(a => a.category === 'Research')} category="Research" significance="Minor" />
+                            <HorizontalScrollRow title="Co-curricular & Service Activities" activities={activities.filter(a => a.category === 'Service' || a.category === 'Co-curricular')} category="Service" significance="Minor" />
                         </div>
-                        <HorizontalScrollRow title="Major Activities" activities={major} category={activeTab} significance="Major" />
-                        <HorizontalScrollRow title="Significant Activities" activities={significant} category={activeTab} significance="Significant" />
-                        <HorizontalScrollRow title="Minor Activities" activities={minor} category={activeTab} significance="Minor" />
                     </>
                 )}
 
@@ -405,7 +379,7 @@ const FacultyDashboard = () => {
                                 <button onClick={handlePrint} className="btn" style={{ flex: 1, padding: '0.75rem', background: 'white', border: '1px solid #cbd5e1', color: '#312e81', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                                     <Printer size={18} /> Print Report
                                 </button>
-                                <button className="btn" style={{ flex: 1, padding: '0.75rem', background: '#312e81', color: 'white', border: 'none', fontWeight: '600' }} onClick={() => alert("Report Exported to PDF")}>
+                                <button className="btn" style={{ flex: 1, padding: '0.75rem', background: '#312e81', color: 'white', border: 'none', fontWeight: '600' }} onClick={handlePrint}>
                                     Download PDF
                                 </button>
                             </div>

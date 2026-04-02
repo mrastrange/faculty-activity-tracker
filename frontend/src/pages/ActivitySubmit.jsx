@@ -12,9 +12,10 @@ const ActivitySubmit = () => {
         title: '',
         category: 'Teaching',
         activityType: 'lectures',
-        significance: 'Minor',
         description: '',
-        quantity: 1
+        quantity: 1,
+        semester: '',
+        proofLink: ''
     });
 
     const UGC_GUIDELINES = {
@@ -43,15 +44,6 @@ const ActivitySubmit = () => {
     const selectedUgcItem = UGC_GUIDELINES[formData.category]?.find(item => item.id === formData.activityType);
     const suggestedScore = selectedUgcItem ? selectedUgcItem.points * formData.quantity : 0;
 
-    // Checkbox states for Semester
-    const [semesters, setSemesters] = useState({
-        fall2023: false,
-        spring2023: false,
-        summer2023: false,
-        other: false
-    });
-
-    const [file, setFile] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -71,48 +63,26 @@ const ActivitySubmit = () => {
         setFormData({ ...formData, quantity: val });
     };
 
-    const handleCheckboxChange = (e) => {
-        setSemesters({ ...semesters, [e.target.name]: e.target.checked });
-    };
-
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError('');
 
         try {
-            // Compile Semesters into CSV string
-            const activeSemesters = [];
-            if (semesters.fall2023) activeSemesters.push('Fall 2026');
-            if (semesters.spring2023) activeSemesters.push('Spring 2026');
-            if (semesters.summer2023) activeSemesters.push('Summer 2026');
-            if (semesters.other) activeSemesters.push('Other');
-
             const data = new FormData();
             data.append('title', formData.title);
             data.append('category', formData.category);
-            data.append('significance', formData.significance);
-            data.append('semester', activeSemesters.join(', '));
+            data.append('significance', 'Minor'); // Defaulting since weight was removed from UI
+            data.append('semester', formData.semester);
             data.append('description', formData.description);
             data.append('quantity', formData.quantity);
-            data.append('suggested_score', suggestedScore);
-
-            if (file) {
-                // If they supplied a file, append it
-                data.append('proof_document', file);
-            } else {
-                // Backend requires something if we use multer generically without `.single` handling optional gracefully? Right now controller checks req.file. Optional logic handles it if multer isn't strict.
-                // In my controller rewrite I made it optional!
+            // Send proof_link explicitly
+            if (formData.proofLink) {
+                data.append('proof_link', formData.proofLink);
             }
 
             await api.post('/activities', data, {
-                headers: { 'Content-Type': 'multipart/form-data' } // Works even if file is missing if configured correctly
+                headers: { 'Content-Type': 'multipart/form-data' } 
             });
             navigate('/');
         } catch (err) {
@@ -170,25 +140,19 @@ const ActivitySubmit = () => {
                             </select>
                         </div>
 
-                        <div className="form-group" style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                            <div>
-                                <label className="form-label" style={{ fontWeight: '600' }} htmlFor="quantity">Quantity (Multiplier):</label>
-                                <input
-                                    id="quantity"
-                                    name="quantity"
-                                    type="number"
-                                    min="1"
-                                    required
-                                    className="form-input"
-                                    value={formData.quantity}
-                                    onChange={handleQuantityChange}
-                                    style={{ maxWidth: '100px' }}
-                                />
-                            </div>
-                            <div style={{ background: '#f0fdf4', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #bbf7d0', minWidth: '150px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '0.8rem', color: '#166534', fontWeight: 'bold', textTransform: 'uppercase' }}>Suggested Score</div>
-                                <div style={{ fontSize: '2rem', fontWeight: '900', color: '#15803d' }}>{suggestedScore}</div>
-                            </div>
+                        <div className="form-group">
+                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="quantity">Quantity (Multiplier):</label>
+                            <input
+                                id="quantity"
+                                name="quantity"
+                                type="number"
+                                min="1"
+                                required
+                                className="form-input"
+                                value={formData.quantity}
+                                onChange={handleQuantityChange}
+                                style={{ maxWidth: '100px' }}
+                            />
                         </div>
 
                         <div className="form-group">
@@ -207,41 +171,17 @@ const ActivitySubmit = () => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="significance">Weight:</label>
-                            <select
-                                id="significance"
-                                name="significance"
+                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="semester">Semester:</label>
+                            <input
+                                id="semester"
+                                name="semester"
+                                type="text"
                                 className="form-input"
-                                value={formData.significance}
+                                placeholder="e.g. Fall 2026, Spring 2026"
+                                value={formData.semester}
                                 onChange={handleInputChange}
-                                style={{ maxWidth: '200px' }}
-                            >
-                                <option value="Minor">Minor</option>
-                                <option value="Significant">Significant</option>
-                                <option value="Major">Major</option>
-                            </select>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label" style={{ fontWeight: '600' }}>Semester:</label>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input type="checkbox" name="fall2023" checked={semesters.fall2023} onChange={handleCheckboxChange} style={{ accentColor: '#0ea5e9', transform: 'scale(1.2)' }} />
-                                    Fall 2026
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input type="checkbox" name="spring2023" checked={semesters.spring2023} onChange={handleCheckboxChange} style={{ accentColor: '#0ea5e9', transform: 'scale(1.2)' }} />
-                                    Spring 2026
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input type="checkbox" name="summer2023" checked={semesters.summer2023} onChange={handleCheckboxChange} style={{ accentColor: '#0ea5e9', transform: 'scale(1.2)' }} />
-                                    Summer 2026
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input type="checkbox" name="other" checked={semesters.other} onChange={handleCheckboxChange} style={{ accentColor: '#0ea5e9', transform: 'scale(1.2)' }} />
-                                    Other
-                                </label>
-                            </div>
+                                style={{ maxWidth: '400px' }}
+                            />
                         </div>
 
                         <div className="form-group">
@@ -258,14 +198,16 @@ const ActivitySubmit = () => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label" style={{ fontWeight: '600' }}>Proof Document (Optional PDF)</label>
-                            <div style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <input
-                                    type="file"
-                                    onChange={handleFileChange}
-                                />
-                                {file && <span style={{ fontSize: '0.8rem', color: 'green' }}>File attached</span>}
-                            </div>
+                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="proofLink">Link to Proof</label>
+                            <input
+                                id="proofLink"
+                                name="proofLink"
+                                type="url"
+                                className="form-input"
+                                placeholder="https://drive.google.com/..."
+                                value={formData.proofLink}
+                                onChange={handleInputChange}
+                            />
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
@@ -279,21 +221,6 @@ const ActivitySubmit = () => {
                     </form>
                 </div>
 
-                {/* Right Side: Instructions Sidebar */}
-                <div style={{ width: '300px', background: '#f8fafc', padding: '1.5rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', alignSelf: 'stretch' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.8rem' }}>▼</span> Instructions
-                    </h3>
-
-                    <div style={{ fontSize: '0.875rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '1rem', lineHeight: '1.5' }}>
-                        <p>For each activity, select a category, insert information about each activity, and provide a concise description that provides context.</p>
-                        <p>Each activity should have a weight of <strong>major, significant, or minor.</strong></p>
-                        <p>Guidelines are provided but are not strictly enforced in the score calculation.</p>
-                        <p>If you would like to make a weight claim that is different than listed, it must be justified in the description.</p>
-                        <p>If you would like to make a bonus claim meaning that your work in one category should overflow into another, then justify it in the description.</p>
-                        <p>The committee may ask for evidence for extra support and context.</p>
-                    </div>
-                </div>
 
             </div>
         </div>

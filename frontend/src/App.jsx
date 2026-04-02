@@ -10,7 +10,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import HODDashboard from './pages/HODDashboard';
 import ActivitySubmit from './pages/ActivitySubmit';
 import ProfessorDetail from './pages/ProfessorDetail';
-import GraphsDashboard from './pages/GraphsDashboard';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -87,15 +86,7 @@ function App() {
           }
         />
 
-        {/* Analytics Graphs (Admin/HOD) */}
-        <Route
-          path="/graphs"
-          element={
-            <ProtectedRoute allowedRoles={['Admin', 'HOD']}>
-              <GraphsDashboard />
-            </ProtectedRoute>
-          }
-        />
+
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

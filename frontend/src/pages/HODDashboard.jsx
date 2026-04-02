@@ -124,10 +124,7 @@ const HODDashboard = () => {
                         Department Reports
                     </button>
 
-                    <Link to="/graphs" style={{ textDecoration: 'none', color: 'var(--text-main)', padding: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '1.5rem', marginTop: '0.5rem', borderTop: '1px solid var(--border)' }}>
-                        <BarChart2 size={18} />
-                        Merit Scoring Graphs
-                    </Link>
+
 
                     <div style={{ marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid var(--border)' }}>
                         <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>User: {user?.first_name} ({user?.role})</p>
