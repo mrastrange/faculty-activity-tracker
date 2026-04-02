@@ -1,0 +1,323 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: #175c99;
+  /* SSN Blue */
+  --primary-hover: #124777;
+  --secondary: #f2722b;
+  /* SSN Orange */
+  --background: #F3F4F6;
+  /* Gray 100 */
+  --surface: #FFFFFF;
+  --text-main: #111827;
+  /* Gray 900 */
+  --text-muted: #6B7280;
+  /* Gray 500 */
+  --border: #E5E7EB;
+  /* Gray 200 */
+  --danger: #EF4444;
+  /* Red 500 */
+  --success: #10B981;
+  /* Emerald 500 */
+  --warning: #F59E0B;
+  /* Amber 500 */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+/* Layouts */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Status Badges */
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-pending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.badge-approved {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.badge-rejected {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 0.5rem;
+}
+
+.metric-label {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Tables */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  background-color: #F9FAFB;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+tr:hover {
+  background-color: rgba(243, 244, 246, 0.5);
+}
+
+/* Login Page specific */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f6f8fb 0%, #e5e7eb 100%);
+  padding: 1rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 2.5rem 2rem;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-header h1 {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.login-header p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* Auth Error */
+.alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Print Styles */
+@media print {
+
+  /* Hide UI elements that shouldn't be in the report */
+  .no-print,
+  nav,
+  aside {
+    display: none !important;
+  }
+
+  /* Reset container spacing */
+  .app-container,
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background: white !important;
+  }
+
+  /* Format specifically the report split layout */
+  .report-split {
+    display: block !important;
+  }
+
+  .report-sidebar,
+  .report-main {
+    width: 100% !important;
+    display: block !important;
+  }
+
+  /* Ensure backgrounds render for charts and color badges */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Header styling tweak for print */
+  .print-header {
+    text-align: center;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem !important;
+  }
+
+  /* Specific override to keep primary score block colored */
+  .print-primary {
+    background: var(--primary) !important;
+    color: white !important;
+  }
+
+  .print-primary div {
+    color: white !important;
+  }
+
+  body {
+    background: white;
+  }
+}
