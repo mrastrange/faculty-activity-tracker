@@ -11,11 +11,14 @@ const ActivitySubmit = () => {
     const selectedActivity = location.state?.viewActivity || location.state?.cloneActivity || null;
     const isViewMode = Boolean(location.state?.viewActivity);
     const isRejectedActivity = selectedActivity?.status === 'Rejected';
+    const displayCategory = selectedActivity?.category === 'Service' ? 'Co-curricular' : selectedActivity?.category;
+    const initialCategory = displayCategory || 'Teaching';
+    const initialActivityType = initialCategory === 'Co-curricular' ? 'mentoring' : initialCategory === 'Research' ? 'journal_papers' : 'lectures';
 
     const [formData, setFormData] = useState({
         title: selectedActivity?.title || '',
-        category: selectedActivity?.category || 'Teaching',
-        activityType: 'lectures',
+        category: initialCategory,
+        activityType: initialActivityType,
         description: selectedActivity?.description || '',
         quantity: selectedActivity?.quantity || 1,
         semester: selectedActivity?.semester || '',

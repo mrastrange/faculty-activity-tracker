@@ -3,6 +3,8 @@ const ApiScoreModel = require('../models/apiScoreModel');
 const UserModel = require('../models/userModel');
 const { sendApprovalEmail } = require('../utils/emailService');
 
+const normalizeCategory = (category) => category === 'Co-curricular' ? 'Service' : category;
+
 const submitActivity = async (req, res, next) => {
     try {
         const { category, significance, semester, title, description, date_of_activity, quantity, suggested_score, proof_link } = req.body;
@@ -19,7 +21,7 @@ const submitActivity = async (req, res, next) => {
 
         const activityData = {
             faculty_id,
-            category,
+            category: normalizeCategory(category),
             significance,
             semester,
             title,
@@ -92,7 +94,7 @@ const resubmitActivity = async (req, res, next) => {
         const activityDate = date_of_activity || existingActivity.date_of_activity || new Date().toISOString().split('T')[0];
 
         const activityData = {
-            category,
+            category: normalizeCategory(category),
             significance,
             semester,
             title,

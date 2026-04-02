@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
 const UserModel = require('../models/userModel');
 const { sendVerificationEmail } = require('../utils/emailService');
 
@@ -138,7 +139,6 @@ const verifyOTP = async (req, res, next) => {
             return res.status(400).json({ message: 'User is already verified' });
         }
 
-        const pool = require('../config/db').pool;
         const validCheck = await pool.query(
             "SELECT id FROM users WHERE email = $1 AND otp = $2 AND otp_expires_at > NOW()",
             [email, otp]
@@ -192,7 +192,6 @@ const checkEmail = async (req, res, next) => {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
             // Save OTP to DB for this user (PG Native interval)
-            const pool = require('../config/db').pool;
             await pool.query("UPDATE users SET otp = $1, otp_expires_at = NOW() + INTERVAL '15 minutes' WHERE id = $2", [otp, user.id]);
 
             // Send email
@@ -219,7 +218,6 @@ const setupPassword = async (req, res, next) => {
         const user = await UserModel.findByEmail(email);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const pool = require('../config/db').pool;
         const validCheck = await pool.query(
             "SELECT id FROM users WHERE email = $1 AND otp = $2 AND otp_expires_at > NOW()",
             [email, otp]
