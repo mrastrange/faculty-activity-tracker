@@ -83,3 +83,5 @@ The project is divided into two main directories:
 
 ---
 
+## License
+This project is licensed under the MIT License.
