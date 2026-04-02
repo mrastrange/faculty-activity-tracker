@@ -4,30 +4,27 @@ const { sendApprovalEmail } = require('../utils/emailService');
 
 const submitActivity = async (req, res, next) => {
     try {
-        const { category, semester, title, description, date_of_activity, quantity, suggested_score } = req.body;
+        const { category, significance, semester, title, description, date_of_activity, quantity, suggested_score } = req.body;
         const faculty_id = req.user.id;
 
-        if (!title || !category) {
+        if (!title || !category || !significance) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        const proof_document_file = req.file ? req.file.buffer : null;
-        const proof_document_name = req.file ? req.file.originalname : null;
-        const proof_document_mime = req.file ? req.file.mimetype : null;
+        const proof_document_path = req.file ? `uploads/${req.file.filename}` : null;
 
-        // Provide a default date if not passed
+        // Provide a default date if not passed, because UI screenshot didn't strictly show a Date input
         const activityDate = date_of_activity || new Date().toISOString().split('T')[0];
 
         const activityData = {
             faculty_id,
             category,
+            significance,
             semester,
             title,
             description,
             date_of_activity: activityDate,
-            proof_document_file,
-            proof_document_name,
-            proof_document_mime,
+            proof_document_path,
             quantity: quantity ? parseInt(quantity, 10) : 1,
             suggested_score: suggested_score ? parseInt(suggested_score, 10) : 0
         };
@@ -101,7 +98,7 @@ const reviewActivity = async (req, res, next) => {
                         facultyUser.email,
                         updatedActivity.title,
                         updatedActivity.category,
-                        '', // Empty string for significance which was removed
+                        updatedActivity.significance,
                         score
                     );
                 }
@@ -116,29 +113,10 @@ const reviewActivity = async (req, res, next) => {
     }
 };
 
-const getProofDocument = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const docRecord = await ActivityModel.getDocument(id);
-
-        if (!docRecord || !docRecord.proof_document_file) {
-            return res.status(404).json({ message: 'Document not found' });
-        }
-
-        res.setHeader('Content-Type', docRecord.proof_document_mime || 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${docRecord.proof_document_name}"`);
-        res.send(docRecord.proof_document_file);
-
-    } catch (error) {
-        next(error);
-    }
-}
-
 module.exports = {
     submitActivity,
     getMyActivities,
     getDepartmentActivities,
     getAllActivities,
-    reviewActivity,
-    getProofDocument
+    reviewActivity
 };

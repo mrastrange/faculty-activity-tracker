@@ -6,12 +6,12 @@ const getFacultyDashboard = async (req, res, next) => {
         const currentYear = new Date().getFullYear().toString();
 
         // Get total score statically from api_scores cache
-        const scoreQuery = `SELECT final_api, normalized_teaching, normalized_admin, normalized_research FROM api_scores WHERE faculty_id = $1 AND academic_year = $2`;
+        const scoreQuery = `SELECT total_score, teaching_score, co_curricular_score, research_score FROM api_scores WHERE faculty_id = $1 AND academic_year = $2`;
         const scoreResult = await pool.query(scoreQuery, [faculty_id, currentYear]);
-        const totalScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].final_api) : 0;
-        const teachingScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].normalized_teaching) : 0;
-        const adminScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].normalized_admin) : 0;
-        const researchScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].normalized_research) : 0;
+        const totalScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].total_score) : 0;
+        const teachingScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].teaching_score) : 0;
+        const coCurricularScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].co_curricular_score) : 0;
+        const researchScore = scoreResult.rows.length ? parseFloat(scoreResult.rows[0].research_score) : 0;
 
         // Get activity counts
         const countQuery = `
@@ -26,7 +26,7 @@ const getFacultyDashboard = async (req, res, next) => {
 
         // Get recent activities
         const recentQuery = `
-            SELECT a.id, a.title, a.category, a.description, a.status, a.date_of_activity, a.proof_document_name, a.proof_document_mime, a.assigned_score
+            SELECT a.id, a.title, a.category, a.significance, a.description, a.status, a.date_of_activity
             FROM activities a
             WHERE a.faculty_id = $1
             ORDER BY a.submitted_at DESC
@@ -35,10 +35,10 @@ const getFacultyDashboard = async (req, res, next) => {
 
         res.status(200).json({
             metrics: {
-                totalScore: totalScore.toFixed(2),
-                teachingScore: teachingScore.toFixed(2),
-                adminScore: adminScore.toFixed(2),
-                researchScore: researchScore.toFixed(2),
+                totalScore,
+                teachingScore,
+                coCurricularScore,
+                researchScore,
                 pending: parseInt(countResult.rows[0].pending) || 0,
                 approved: parseInt(countResult.rows[0].approved) || 0,
                 rejected: parseInt(countResult.rows[0].rejected) || 0
