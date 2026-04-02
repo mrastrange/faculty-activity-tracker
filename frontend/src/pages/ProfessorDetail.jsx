@@ -38,10 +38,29 @@ const CategoryAccordion = ({ title, category, activities, narrative, onReview })
                                     <div style={{ flex: 1, paddingRight: '1rem' }}>
                                         <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', color: '#0f172a' }}>{activity.title}</h4>
                                         <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem' }}>
-                                            <span>{activity.semester || 'Fall 2023'}</span>
-                                            <span style={{ textTransform: 'capitalize' }}>{activity.significance}</span>
+                                            <span>{activity.semester || 'Fall 2026'}</span>
+                                            <span style={{ fontWeight: '500' }}>Base API Points: {activity.suggested_score}</span>
                                         </div>
                                         <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569' }}>{activity.description}</p>
+                                        {activity.proof_document_name && (
+                                            <button 
+                                                onClick={async () => {
+                                                    try {
+                                                        const { data } = await api.get(`/activities/${activity.id}/document`, { responseType: 'blob' });
+                                                        const url = window.URL.createObjectURL(new Blob([data]));
+                                                        const link = document.createElement('a');
+                                                        link.href = url;
+                                                        link.setAttribute('download', activity.proof_document_name || 'document.pdf');
+                                                        document.body.appendChild(link);
+                                                        link.click();
+                                                        link.parentNode.removeChild(link);
+                                                    } catch (e) { alert("Download failed"); }
+                                                }} 
+                                                style={{ marginTop: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#e0e7ff', color: '#3730a3', border: '1px solid #c7d2fe', borderRadius: '0.25rem', cursor: 'pointer' }}
+                                            >
+                                                Download Evidence
+                                            </button>
+                                        )}
                                     </div>
 
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -50,12 +69,12 @@ const CategoryAccordion = ({ title, category, activities, narrative, onReview })
                                         {activity.status === 'Pending' && (
                                             <>
                                                 <button
-                                                    onClick={() => onReview(activity.id, 'Approved', activity.significance)}
+                                                    onClick={() => onReview(activity.id, 'Approved', activity.suggested_score)}
                                                     style={{ padding: '0.25rem 0.75rem', background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', borderRadius: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}>
-                                                    <Check size={14} /> Accept
+                                                    <Check size={14} /> Accept ({activity.suggested_score} pts)
                                                 </button>
                                                 <button
-                                                    onClick={() => onReview(activity.id, 'Rejected', activity.significance)}
+                                                    onClick={() => onReview(activity.id, 'Rejected', 0)}
                                                     style={{ padding: '0.25rem 0.75rem', background: 'white', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem', fontWeight: '500' }}>
                                                     <X size={14} /> Reject
                                                 </button>
@@ -101,13 +120,8 @@ const ProfessorDetail = () => {
             const narrativesRes = await api.get(`/narratives/faculty/${id}`);
             setNarratives(narrativesRes.data);
 
-            // Re-fetch Analytics to find their total score from the CTE
-            // (In a real app, you'd build a direct endpoint for `api_scores` via ID, but since it's cached we can derive it)
             const analyticsRes = await api.get('/dashboard/admin/analytics');
-            const topPerformers = analyticsRes.data.topPerformers;
-            // Actually, getAdminAnalytics doesn't return all users, just top 5. 
-            // We should just calculate it locally for the UI rubric based on 'Approved' activities.
-
+            // Mocking pulling specific cached API scores for now if needed, we'll calculate below for fallback.
         } catch (error) {
             console.error("Error fetching professor data", error);
         } finally {
@@ -120,10 +134,9 @@ const ProfessorDetail = () => {
         // eslint-disable-next-line
     }, [id]);
 
-    const handleReview = async (activityId, status, significance) => {
-        const assigned_score = significance === 'Major' ? 10 : significance === 'Significant' ? 5 : 2; // Arbitrary fallback scores for the payload, API ignores them now
+    const handleReview = async (activityId, status, suggested_score) => {
         try {
-            await api.put(`/activities/${activityId}/review`, { status, review_comments: '', assigned_score });
+            await api.put(`/activities/${activityId}/review`, { status, review_comments: '', assigned_score: suggested_score });
             // Re-fetch data to update UI and Score
             fetchData();
         } catch (error) {
@@ -137,21 +150,23 @@ const ProfessorDetail = () => {
     // Derived State
     const teachingAcc = activities.filter(a => a.category === 'Teaching');
     const researchAcc = activities.filter(a => a.category === 'Research');
-    const serviceAcc = activities.filter(a => a.category === 'Service');
+    const serviceAcc = activities.filter(a => a.category === 'Admin' || a.category === 'Co-curricular' || a.category === 'Service');
 
     const teachingNarrative = narratives.find(n => n.category === 'Teaching')?.narrative_text;
     const researchNarrative = narratives.find(n => n.category === 'Research')?.narrative_text;
-    const serviceNarrative = narratives.find(n => n.category === 'Service')?.narrative_text;
+    const serviceNarrative = narratives.find(n => n.category === 'Admin' || n.category === 'Service')?.narrative_text;
 
-    // Local Rubric Calculation matching backend's CTE
+    // Derived Rubric API Calculation based on Admin backend rules
     const approvedActivities = activities.filter(a => a.status === 'Approved');
-    const majorCount = approvedActivities.filter(a => a.significance === 'Major').length;
-    const sigMinCount = approvedActivities.filter(a => a.significance === 'Significant' || a.significance === 'Minor').length;
+    const teachingSum = approvedActivities.filter(a => a.category === 'Teaching').reduce((acc, a) => acc + (a.assigned_score || 0), 0);
+    const researchSum = approvedActivities.filter(a => a.category === 'Research').reduce((acc, a) => acc + (a.assigned_score || 0), 0);
+    const adminSum = approvedActivities.filter(a => a.category === 'Admin').reduce((acc, a) => acc + (a.assigned_score || 0), 0);
 
-    let finalScore = 6;
-    if (majorCount >= 2 && sigMinCount >= 10) finalScore = 10;
-    else if (majorCount >= 1 && sigMinCount >= 6) finalScore = 8;
-    else if (majorCount >= 0 && sigMinCount >= 2) finalScore = 7;
+    const normTeaching = (Math.min(teachingSum, 100) / 100) * 100;
+    const normResearch = (Math.min(researchSum, 150) / 150) * 100;
+    const normAdmin = (Math.min(adminSum, 50) / 50) * 100;
+
+    const finalScore = (0.40 * normTeaching) + (0.50 * normResearch) + (0.10 * normAdmin);
 
     return (
         <div style={{ display: 'flex', background: '#fff', minHeight: '100vh', width: '100%' }}>
@@ -208,50 +223,43 @@ const ProfessorDetail = () => {
                     <p style={{ margin: 0, color: '#475569', fontSize: '0.9rem' }}>N/A</p>
                 </div>
 
-                {/* Activity Rubric Info */}
+                {/* Academic Norms Info */}
                 <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
-                    <h4 style={{ margin: '0 0 0.75rem 0', color: '#0f172a', fontSize: '1rem' }}>Activity Rubric</h4>
+                    <h4 style={{ margin: '0 0 0.75rem 0', color: '#0f172a', fontSize: '1rem' }}>Academic Performance Index Metric</h4>
                     <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#475569', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <li>1 Major Activity = 8 Significant</li>
-                        <li>1 Minor Activity = 0.25 Significant</li>
-                        <li>10 Score = 2+ Major, 10+ Sig/Min</li>
+                        <li>Teaching: (Sum / 100 Cap) * 40%</li>
+                        <li>Research: (Sum / 150 Cap) * 50%</li>
+                        <li>Admin: (Sum / 50 Cap) * 10%</li>
                     </ul>
                 </div>
 
-                <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
-                    <h4 style={{ margin: '0 0 0.75rem 0', color: '#0f172a', fontSize: '1rem' }}>Professor was new, showed excellent improvement</h4>
-                    <p style={{ margin: '3rem 0 0 0', color: '#94a3b8', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        Saved <Check size={14} />
-                    </p>
-                </div>
-
-                {/* Score Breakdown (Arbitrary display matching screenshot layout) */}
+                {/* Score Breakdown */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem' }}>
                     <div style={{ textAlign: 'center', flex: 1 }}>
                         <div style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: '600', marginBottom: '0.5rem' }}>Teaching</div>
                         <div style={{ background: '#e2e8f0', padding: '0.5rem', borderRadius: '0.5rem', fontWeight: 'bold', fontSize: '1.25rem', color: '#334155' }}>
-                            {majorCount > 0 ? 8 : 7}
+                            {normTeaching.toFixed(1)}%
                         </div>
                     </div>
                     <div style={{ textAlign: 'center', flex: 1 }}>
                         <div style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: '600', marginBottom: '0.5rem' }}>Research</div>
                         <div style={{ background: '#e2e8f0', padding: '0.5rem', borderRadius: '0.5rem', fontWeight: 'bold', fontSize: '1.25rem', color: '#334155' }}>
-                            {majorCount > 1 ? 8 : 7}
+                            {normResearch.toFixed(1)}%
                         </div>
                     </div>
                     <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: '600', marginBottom: '0.5rem' }}>Service</div>
+                        <div style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: '600', marginBottom: '0.5rem' }}>Admin</div>
                         <div style={{ background: '#e2e8f0', padding: '0.5rem', borderRadius: '0.5rem', fontWeight: 'bold', fontSize: '1.25rem', color: '#334155' }}>
-                            {sigMinCount > 5 ? 7 : 6}
+                            {normAdmin.toFixed(1)}%
                         </div>
                     </div>
                 </div>
 
                 {/* Final Calculated Score */}
                 <div style={{ marginTop: '1rem' }}>
-                    <h4 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontSize: '1rem' }}>Final Score</h4>
+                    <h4 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontSize: '1rem' }}>Final Normalized API</h4>
                     <div style={{ background: '#dcfce7', padding: '0.75rem 1rem', borderRadius: '0.5rem', width: 'fit-content', fontWeight: 'bold', fontSize: '1.5rem', color: '#166534' }}>
-                        {finalScore.toFixed(1)}
+                        {finalScore.toFixed(2)} / 100
                     </div>
                 </div>
 

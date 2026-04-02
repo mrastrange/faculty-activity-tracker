@@ -24,4 +24,7 @@ router.get('/all', protect, authorizeRoles('Admin'), getAllActivities);
 // Review Routes (Admin/HOD)
 router.put('/:id/review', protect, authorizeRoles('Admin', 'HOD'), reviewActivity);
 
+// Document Retrieval Route (Protected, but open to relevant roles)
+router.get('/:id/document', protect, authorizeRoles('Faculty', 'HOD', 'Admin'), require('../controllers/activityController').getProofDocument);
+
 module.exports = router;

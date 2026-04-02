@@ -5,34 +5,57 @@ import { Award, CheckCircle, Clock, XCircle, Plus, ChevronRight, ChevronLeft, Pr
 import { Link } from 'react-router-dom';
 import { ActivityDonutChart, CategoryStackedBar } from '../components/VisualCharts';
 
-const ActivityCard = ({ activity }) => (
-    <div style={{
-        minWidth: '250px',
-        maxWidth: '250px',
-        padding: '1.25rem',
-        background: 'white',
-        borderRadius: '0.75rem',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-        border: '1px solid #e2e8f0',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem'
-    }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#64748b' }}>
-            <span>{new Date(activity.date_of_activity).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-            <span className={`badge badge-${activity.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>{activity.status}</span>
+const ActivityCard = ({ activity }) => {
+    const handleDownload = async () => {
+        try {
+            const response = await api.get(`/activities/${activity.id}/document`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: activity.proof_document_mime || 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', activity.proof_document_name || 'document.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            alert("No document found or download failed");
+        }
+    };
+
+    return (
+        <div style={{
+            minWidth: '250px',
+            maxWidth: '250px',
+            padding: '1.25rem',
+            background: 'white',
+            borderRadius: '0.75rem',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+            border: '1px solid #e2e8f0',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
+            position: 'relative'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#64748b' }}>
+                <span>{new Date(activity.date_of_activity).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                <span className={`badge badge-${activity.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>{activity.status}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '4px', height: '16px', background: '#f2722b', borderRadius: '4px' }}></div>
+                <h4 style={{ margin: 0, fontSize: '1rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={activity.title}>
+                    {activity.title}
+                </h4>
+            </div>
+            <p style={{ fontSize: '0.875rem', color: '#475569', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={activity.description}>
+                {activity.description}
+            </p>
+            {activity.proof_document_name && (
+                <button onClick={handleDownload} style={{ marginTop: '0.5rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#e0e7ff', color: '#3730a3', border: '1px solid #c7d2fe', borderRadius: '0.25rem', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                    View Evidence
+                </button>
+            )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '4px', height: '16px', background: '#f2722b', borderRadius: '4px' }}></div>
-            <h4 style={{ margin: 0, fontSize: '1rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={activity.title}>
-                {activity.title}
-            </h4>
-        </div>
-        <p style={{ fontSize: '0.875rem', color: '#475569', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={activity.description}>
-            {activity.description}
-        </p>
-    </div>
-);
+    );
+};
 
 const EmptyAddCard = ({ category, significance }) => (
     <Link to="/submit" style={{ textDecoration: 'none' }}>
@@ -62,7 +85,7 @@ const EmptyAddCard = ({ category, significance }) => (
     </Link>
 );
 
-const HorizontalScrollRow = ({ title, activities, category, significance }) => {
+const HorizontalScrollRow = ({ title, activities, category }) => {
     return (
         <div style={{ marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
@@ -78,7 +101,7 @@ const HorizontalScrollRow = ({ title, activities, category, significance }) => {
                     {activities.map(a => (
                         <ActivityCard key={a.id} activity={a} />
                     ))}
-                    <EmptyAddCard category={category} significance={significance} />
+                    <EmptyAddCard category={category} />
                 </div>
 
                 <ChevronRight color="#cbd5e1" size={28} style={{ cursor: 'not-allowed' }} />
@@ -278,10 +301,10 @@ const FacultyDashboard = () => {
     // Filter activities by current tab
     const filteredActivities = activities.filter(a => a.category === activeTab);
 
-    // Group by Significance
-    const major = filteredActivities.filter(a => a.significance === 'Major');
-    const significant = filteredActivities.filter(a => a.significance === 'Significant');
-    const minor = filteredActivities.filter(a => a.significance === 'Minor');
+    // Group by Status
+    const approvedList = filteredActivities.filter(a => a.status === 'Approved');
+    const pendingList = filteredActivities.filter(a => a.status === 'Pending');
+    const rejectedList = filteredActivities.filter(a => a.status === 'Rejected');
 
     const handlePrint = () => {
         window.print();
@@ -372,16 +395,16 @@ const FacultyDashboard = () => {
                 {activeTab === 'Profile' && <ProfileView user={user} />}
 
                 {/* Standard Edit Categories */}
-                {(activeTab === 'Teaching' || activeTab === 'Research' || activeTab === 'Service') && (
+                {(activeTab === 'Teaching' || activeTab === 'Research' || activeTab === 'Admin') && (
                     <>
                         <NarrativeEditor category={activeTab} currentYear={new Date().getFullYear().toString()} />
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
                             <h2 style={{ fontSize: '1.5rem', margin: 0, color: '#0f172a' }}>Logged Activities</h2>
                             <span className="badge badge-pending">{filteredActivities.length} Total</span>
                         </div>
-                        <HorizontalScrollRow title="Major Activities" activities={major} category={activeTab} significance="Major" />
-                        <HorizontalScrollRow title="Significant Activities" activities={significant} category={activeTab} significance="Significant" />
-                        <HorizontalScrollRow title="Minor Activities" activities={minor} category={activeTab} significance="Minor" />
+                        <HorizontalScrollRow title="Approved Activities" activities={approvedList} category={activeTab} />
+                        <HorizontalScrollRow title="Pending Review" activities={pendingList} category={activeTab} />
+                        <HorizontalScrollRow title="Rejected" activities={rejectedList} category={activeTab} />
                     </>
                 )}
 
@@ -427,15 +450,15 @@ const FacultyDashboard = () => {
                             )}
 
                             <CategoryStackedBar
-                                categoryName="Co-curricular / Service"
-                                totalScore={metrics.coCurricularScore}
-                                approved={activities.filter(a => (a.category === 'Co-curricular' || a.category === 'Service') && a.status === 'Approved').length}
-                                pending={activities.filter(a => (a.category === 'Co-curricular' || a.category === 'Service') && a.status === 'Pending').length}
-                                rejected={activities.filter(a => (a.category === 'Co-curricular' || a.category === 'Service') && a.status === 'Rejected').length}
+                                categoryName="Admin"
+                                totalScore={metrics.adminScore || 0}
+                                approved={activities.filter(a => (a.category === 'Admin') && a.status === 'Approved').length}
+                                pending={activities.filter(a => (a.category === 'Admin') && a.status === 'Pending').length}
+                                rejected={activities.filter(a => (a.category === 'Admin') && a.status === 'Rejected').length}
                             />
-                            {narrativesList.find(n => n.category === 'Service' || n.category === 'Co-curricular') && (
+                            {narrativesList.find(n => n.category === 'Admin') && (
                                 <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: '0.9rem', color: '#475569', marginTop: '-1rem', marginBottom: '1.5rem' }}>
-                                    <strong style={{ color: '#0f172a' }}>Co-curricular Narrative:</strong> {narrativesList.find(n => n.category === 'Service' || n.category === 'Co-curricular').narrative_text}
+                                    <strong style={{ color: '#0f172a' }}>Admin Narrative:</strong> {narrativesList.find(n => n.category === 'Admin').narrative_text}
                                 </div>
                             )}
 
@@ -504,9 +527,9 @@ const FacultyDashboard = () => {
                             <span style={{ fontSize: '0.8rem' }}>▼</span> Summary
                         </h3>
                         <div style={{ fontSize: '0.875rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <p style={{ margin: 0 }}>Major: {major.length} activities</p>
-                            <p style={{ margin: 0 }}>Significant: {significant.length} activities</p>
-                            <p style={{ margin: 0 }}>Minor: {minor.length} activities</p>
+                            <p style={{ margin: 0 }}>Approved: {approvedList.length} activities</p>
+                            <p style={{ margin: 0 }}>Pending: {pendingList.length} activities</p>
+                            <p style={{ margin: 0 }}>Rejected: {rejectedList.length} activities</p>
 
                             <div style={{ height: '1px', background: '#e2e8f0', margin: '0.5rem 0' }}></div>
 

@@ -12,7 +12,6 @@ const ActivitySubmit = () => {
         title: '',
         category: 'Teaching',
         activityType: 'lectures',
-        significance: 'Minor',
         description: '',
         quantity: 1
     });
@@ -22,21 +21,19 @@ const ActivitySubmit = () => {
             { id: 'lectures', label: 'Lectures delivered', points: 1 },
             { id: 'tutorials', label: 'Tutorials or practical sessions', points: 1 },
             { id: 'course_prep', label: 'Course preparation/material dev', points: 2 },
-            { id: 'learning_methodology', label: 'Innovative teaching methods', points: 5 },
-            { id: 'exam_duties', label: 'Examination duties', points: 3 }
-        ],
-        'Co-curricular': [
-            { id: 'mentoring', label: 'Student mentoring or advising', points: 5 },
-            { id: 'committees', label: 'Participation in departmental committees', points: 2 },
-            { id: 'workshops', label: 'Organizing workshops or seminars', points: 10 },
-            { id: 'professional_dev', label: 'Professional development programs', points: 5 }
+            { id: 'learning_methodology', label: 'Innovative teaching methods', points: 3 }
         ],
         'Research': [
             { id: 'journal_papers', label: 'Journal publications', points: 8 },
             { id: 'conference_papers', label: 'Conference papers presented', points: 5 },
-            { id: 'books', label: 'Books or book chapters published', points: 20 },
-            { id: 'projects', label: 'Research projects handled', points: 15 },
-            { id: 'supervision', label: 'PhD or PG student supervision', points: 10 }
+            { id: 'books', label: 'Books or book chapters published', points: 12 },
+            { id: 'projects', label: 'Research projects handled', points: 10 },
+            { id: 'supervision', label: 'PhD supervision', points: 8 }
+        ],
+        'Admin': [
+            { id: 'mentoring', label: 'Student mentoring', points: 3 },
+            { id: 'committees', label: 'Committee participation', points: 2 },
+            { id: 'workshops', label: 'Workshop organization', points: 5 }
         ]
     };
 
@@ -97,7 +94,6 @@ const ActivitySubmit = () => {
             const data = new FormData();
             data.append('title', formData.title);
             data.append('category', formData.category);
-            data.append('significance', formData.significance);
             data.append('semester', activeSemesters.join(', '));
             data.append('description', formData.description);
             data.append('quantity', formData.quantity);
@@ -149,8 +145,8 @@ const ActivitySubmit = () => {
                                 style={{ maxWidth: '250px' }}
                             >
                                 <option value="Teaching">Teaching</option>
-                                <option value="Co-curricular">Co-curricular / Admin</option>
                                 <option value="Research">Research & Academic</option>
+                                <option value="Admin">Co-curricular / Admin</option>
                             </select>
                         </div>
 
@@ -164,7 +160,7 @@ const ActivitySubmit = () => {
                                 onChange={handleInputChange}
                                 style={{ maxWidth: '400px' }}
                             >
-                                {UGC_GUIDELINES[formData.category === 'Co-curricular / Admin' ? 'Co-curricular' : formData.category === 'Research & Academic' ? 'Research' : formData.category]?.map(item => (
+                                {UGC_GUIDELINES[formData.category]?.map(item => (
                                     <option key={item.id} value={item.id}>{item.label} (x{item.points} pts)</option>
                                 ))}
                             </select>
@@ -206,21 +202,6 @@ const ActivitySubmit = () => {
                             />
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="significance">Weight:</label>
-                            <select
-                                id="significance"
-                                name="significance"
-                                className="form-input"
-                                value={formData.significance}
-                                onChange={handleInputChange}
-                                style={{ maxWidth: '200px' }}
-                            >
-                                <option value="Minor">Minor</option>
-                                <option value="Significant">Significant</option>
-                                <option value="Major">Major</option>
-                            </select>
-                        </div>
 
                         <div className="form-group">
                             <label className="form-label" style={{ fontWeight: '600' }}>Semester:</label>
@@ -286,12 +267,9 @@ const ActivitySubmit = () => {
                     </h3>
 
                     <div style={{ fontSize: '0.875rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '1rem', lineHeight: '1.5' }}>
-                        <p>For each activity, select a category, insert information about each activity, and provide a concise description that provides context.</p>
-                        <p>Each activity should have a weight of <strong>major, significant, or minor.</strong></p>
-                        <p>Guidelines are provided but are not strictly enforced in the score calculation.</p>
-                        <p>If you would like to make a weight claim that is different than listed, it must be justified in the description.</p>
-                        <p>If you would like to make a bonus claim meaning that your work in one category should overflow into another, then justify it in the description.</p>
-                        <p>The committee may ask for evidence for extra support and context.</p>
+                        <p><strong>1. Standardized Input:</strong> Select a Category and explicitly map your task to an Activity Type to determine the base API points.</p>
+                        <p><strong>2. Multiplier:</strong> In instances of duplicated effort (e.g. 2 Journal Articles), increase the Quantity Multiplier to stack the suggested score.</p>
+                        <p><strong>3. Evidence Requirement:</strong> The committee requires an uploaded PDF/Image proof file for your base API points to be formally evaluated and locked by administrators.</p>
                     </div>
                 </div>
 
