@@ -1,5 +1,11 @@
 import React from 'react';
 
+const STATUS_COLORS = {
+    approved: '#10b981',
+    pending: '#94a3b8',
+    rejected: '#dc2626'
+};
+
 // Custom Donut Chart specifically mapped to the approved vs pending vs rejected statuses
 export const ActivityDonutChart = ({ approved, pending, rejected }) => {
     const total = approved + pending + rejected;
@@ -53,11 +59,12 @@ export const ActivityDonutChart = ({ approved, pending, rejected }) => {
                             cy={center}
                             r={radius}
                             fill="transparent"
-                            stroke="#ef4444"
+                            stroke={STATUS_COLORS.rejected}
                             strokeWidth={strokeWidth}
                             strokeDasharray={`${rejectedDash} ${circumference}`}
                             strokeDashoffset={rejectedOffset}
                             transform={`rotate(-90 ${center} ${center})`}
+                            strokeLinecap="butt"
                             style={{ transition: 'stroke-dasharray 0.5s ease' }}
                         />
                     )}
@@ -69,11 +76,12 @@ export const ActivityDonutChart = ({ approved, pending, rejected }) => {
                             cy={center}
                             r={radius}
                             fill="transparent"
-                            stroke="#94a3b8"
+                            stroke={STATUS_COLORS.pending}
                             strokeWidth={strokeWidth}
                             strokeDasharray={`${pendingDash} ${circumference}`}
                             strokeDashoffset={pendingOffset}
                             transform={`rotate(-90 ${center} ${center})`}
+                            strokeLinecap="butt"
                             style={{ transition: 'stroke-dasharray 0.5s ease' }}
                         />
                     )}
@@ -85,11 +93,12 @@ export const ActivityDonutChart = ({ approved, pending, rejected }) => {
                             cy={center}
                             r={radius}
                             fill="transparent"
-                            stroke="#10b981"
+                            stroke={STATUS_COLORS.approved}
                             strokeWidth={strokeWidth}
                             strokeDasharray={`${approvedDash} ${circumference}`}
                             strokeDashoffset={circumference} // Start from top
                             transform={`rotate(-90 ${center} ${center})`}
+                            strokeLinecap="butt"
                             style={{ transition: 'stroke-dasharray 0.5s ease' }}
                         />
                     )}
@@ -108,13 +117,13 @@ export const ActivityDonutChart = ({ approved, pending, rejected }) => {
             {/* Legend Mapping exactly to Screenshot styling */}
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', fontSize: '0.8rem', color: '#475569', fontWeight: '500' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <div style={{ width: 12, height: 12, background: '#10b981' }}></div> Approved ({approved})
+                    <div style={{ width: 12, height: 12, background: STATUS_COLORS.approved }}></div> Approved ({approved})
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <div style={{ width: 12, height: 12, background: '#94a3b8' }}></div> Pending ({pending})
+                    <div style={{ width: 12, height: 12, background: STATUS_COLORS.pending }}></div> Pending ({pending})
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <div style={{ width: 12, height: 12, background: '#ef4444' }}></div> Rejected ({rejected})
+                    <div style={{ width: 12, height: 12, background: STATUS_COLORS.rejected }}></div> Rejected ({rejected})
                 </div>
             </div>
         </div>
@@ -149,15 +158,15 @@ export const CategoryStackedBar = ({ categoryName, approved, pending, rejected, 
                 background: '#f1f5f9', overflow: 'hidden', gap: '2px' // Gap between segments for that clean edge
             }}>
                 {approved > 0 && (
-                    <div style={{ width: `${approvedPct}%`, background: '#10b981', transition: 'width 0.5s ease' }}
+                    <div style={{ width: `${approvedPct}%`, background: STATUS_COLORS.approved, transition: 'width 0.5s ease' }}
                         title={`Approved: ${approved}`} />
                 )}
                 {pending > 0 && (
-                    <div style={{ width: `${pendingPct}%`, background: '#94a3b8', transition: 'width 0.5s ease' }}
+                    <div style={{ width: `${pendingPct}%`, background: STATUS_COLORS.pending, transition: 'width 0.5s ease' }}
                         title={`Pending: ${pending}`} />
                 )}
                 {rejected > 0 && (
-                    <div style={{ width: `${rejectedPct}%`, background: '#ef4444', transition: 'width 0.5s ease' }}
+                    <div style={{ width: `${rejectedPct}%`, background: STATUS_COLORS.rejected, transition: 'width 0.5s ease' }}
                         title={`Rejected: ${rejected}`} />
                 )}
                 {total === 0 && (
@@ -168,13 +177,13 @@ export const CategoryStackedBar = ({ categoryName, approved, pending, rejected, 
             {/* Mini Legend just above the bar in screenshots, but we can put below for spacing */}
             <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', fontSize: '0.75rem', color: '#64748b' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ display: 'inline-block', width: 8, height: 8, background: '#10b981' }}></span> Approved ({approved})
+                    <span style={{ display: 'inline-block', width: 8, height: 8, background: STATUS_COLORS.approved }}></span> Approved ({approved})
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ display: 'inline-block', width: 8, height: 8, background: '#94a3b8' }}></span> Pending ({pending})
+                    <span style={{ display: 'inline-block', width: 8, height: 8, background: STATUS_COLORS.pending }}></span> Pending ({pending})
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ display: 'inline-block', width: 8, height: 8, background: '#ef4444' }}></span> Rejected ({rejected})
+                    <span style={{ display: 'inline-block', width: 8, height: 8, background: STATUS_COLORS.rejected }}></span> Rejected ({rejected})
                 </span>
             </div>
         </div>
