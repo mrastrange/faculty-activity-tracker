@@ -14,7 +14,7 @@ The project is divided into two main directories:
 - **Framework**: Node.js & Express
 - **Database**: PostgreSQL (`pg`)
 - **Authentication**: JSON Web Token (`jsonwebtoken`), Bcrypt (`bcryptjs`)
-- **Utilities**: `multer` (file uploads), `nodemailer` (emails), `csv-parse` (data seeding)
+- **Utilities**:  `nodemailer` (emails), `csv-parse` (data seeding)
 
 ### Frontend
 - **Framework**: React 19 & Vite
