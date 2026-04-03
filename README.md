@@ -244,20 +244,19 @@ This prevents one category from dominating the full API score.
 
 ## Output Screens
 
-### Faculty Portal
-
+### Login Page
 ![Faculty Dashboard](imgs/Screenshot%20(1).png)
+
+### Faculty Portal
 ![Faculty Activity View](imgs/Screenshot%20(2).png)
 ![Faculty Submission Form](imgs/Screenshot%20(3).png)
+![HOD or Review Queue](imgs/Screenshot%20(4).png)
 
 ### Review And Approval
-
-![HOD or Review Queue](imgs/Screenshot%20(4).png)
-![Admin Review View](imgs/Screenshot%20(5).png)
+![Admin Analytics](imgs/Screenshot%20(6).png)
 
 ### Admin Portal
-
-![Admin Analytics](imgs/Screenshot%20(6).png)
+![Admin Review View](imgs/Screenshot%20(5).png)
 ![Admin User Directory](imgs/Screenshot%20(7).png)
 ![Admin Faculty Report](imgs/Screenshot%20(8).png)
 ![CSV or Report Output](imgs/Screenshot%20(9).png)
