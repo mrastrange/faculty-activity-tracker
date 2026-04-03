@@ -274,10 +274,7 @@ const ProfessorDetail = () => {
                         <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem 0 1rem' }}>
                             <ActivityDonutChart approved={metrics.approved} pending={metrics.pending} rejected={metrics.rejected} />
                         </div>
-                        <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', color: '#475569', lineHeight: 1.7 }}>
-                            <div>CSV export includes profile summary, narratives, and the full submission register.</div>
-                            <div>Only approved activities contribute to score totals.</div>
-                        </div>
+                        
                     </div>
                 </section>
 
