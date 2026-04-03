@@ -1,11 +1,45 @@
-import React, { useState, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
-import { ArrowLeft, UploadCloud } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+
+const CATEGORY_GUIDELINES = {
+    'Teaching': {
+        cap: 100,
+        quantityLabel: 'Count / Hours / Duties',
+        items: [
+            { id: 'lectures', label: 'Lectures delivered', points: 1, note: '1 point per hour' },
+            { id: 'tutorials', label: 'Tutorials / practical sessions', points: 1, note: '1 point per hour' },
+            { id: 'course_prep', label: 'Course material development', points: 5, note: '5 points per course' },
+            { id: 'learning_methodology', label: 'Innovative teaching', points: 10, note: '10 points per activity' },
+            { id: 'exam_duties', label: 'Exam duty', points: 2, note: '2 points per duty' }
+        ]
+    },
+    'Co-curricular': {
+        cap: 30,
+        quantityLabel: 'Count / Semesters / Events',
+        items: [
+            { id: 'mentoring', label: 'Student mentoring', points: 5, note: '5 points per semester' },
+            { id: 'committees', label: 'Committee participation', points: 5, note: '5 points per committee' },
+            { id: 'workshops', label: 'Organizing workshop', points: 10, note: '10 points per event' },
+            { id: 'professional_dev', label: 'FDP participation', points: 5, note: '5 points per program' }
+        ]
+    },
+    'Research': {
+        cap: 100,
+        quantityLabel: 'Count',
+        items: [
+            { id: 'journal_papers', label: 'Journal publication', points: 15, note: '15 points each' },
+            { id: 'conference_papers', label: 'Conference paper', points: 10, note: '10 points each' },
+            { id: 'books', label: 'Book chapter', points: 20, note: '20 points each' },
+            { id: 'projects', label: 'Research project', points: 20, note: '20 points each' },
+            { id: 'phd_supervision', label: 'PhD supervision', points: 25, note: '25 points each' },
+            { id: 'pg_supervision', label: 'PG supervision', points: 10, note: '10 points each' }
+        ]
+    }
+};
 
 const ActivitySubmit = () => {
-    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const selectedActivity = location.state?.viewActivity || location.state?.cloneActivity || null;
@@ -13,7 +47,7 @@ const ActivitySubmit = () => {
     const isRejectedActivity = selectedActivity?.status === 'Rejected';
     const displayCategory = selectedActivity?.category === 'Service' ? 'Co-curricular' : selectedActivity?.category;
     const initialCategory = displayCategory || 'Teaching';
-    const initialActivityType = initialCategory === 'Co-curricular' ? 'mentoring' : initialCategory === 'Research' ? 'journal_papers' : 'lectures';
+    const initialActivityType = CATEGORY_GUIDELINES[initialCategory].items[0].id;
 
     const [formData, setFormData] = useState({
         title: selectedActivity?.title || '',
@@ -25,45 +59,26 @@ const ActivitySubmit = () => {
         proofLink: selectedActivity?.proof_document_path || ''
     });
     const [isEditingRejected, setIsEditingRejected] = useState(!isViewMode);
-
-    const UGC_GUIDELINES = {
-        'Teaching': [
-            { id: 'lectures', label: 'Lectures delivered', points: 1 },
-            { id: 'tutorials', label: 'Tutorials or practical sessions', points: 1 },
-            { id: 'course_prep', label: 'Course preparation/material dev', points: 2 },
-            { id: 'learning_methodology', label: 'Innovative teaching methods', points: 5 },
-            { id: 'exam_duties', label: 'Examination duties', points: 3 }
-        ],
-        'Co-curricular': [
-            { id: 'mentoring', label: 'Student mentoring or advising', points: 5 },
-            { id: 'committees', label: 'Participation in departmental committees', points: 2 },
-            { id: 'workshops', label: 'Organizing workshops or seminars', points: 10 },
-            { id: 'professional_dev', label: 'Professional development programs', points: 5 }
-        ],
-        'Research': [
-            { id: 'journal_papers', label: 'Journal publications', points: 8 },
-            { id: 'conference_papers', label: 'Conference papers presented', points: 5 },
-            { id: 'books', label: 'Books or book chapters published', points: 20 },
-            { id: 'projects', label: 'Research projects handled', points: 15 },
-            { id: 'supervision', label: 'PhD or PG student supervision', points: 10 }
-        ]
-    };
-
-    const selectedUgcItem = UGC_GUIDELINES[formData.category]?.find(item => item.id === formData.activityType);
-    const suggestedScore = selectedUgcItem ? selectedUgcItem.points * formData.quantity : 0;
-    const isReadOnly = isViewMode && !isEditingRejected;
-
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    const selectedGuideline = CATEGORY_GUIDELINES[formData.category];
+    const selectedItem = selectedGuideline.items.find((item) => item.id === formData.activityType);
+    const suggestedScore = selectedItem ? selectedItem.points * formData.quantity : 0;
+    const isReadOnly = isViewMode && !isEditingRejected;
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         if (name === 'category') {
-            const defaultType = UGC_GUIDELINES[value][0].id;
-            setFormData({ ...formData, category: value, activityType: defaultType, quantity: 1 });
-        } else {
-            setFormData({ ...formData, [name]: value });
+            setFormData({
+                ...formData,
+                category: value,
+                activityType: CATEGORY_GUIDELINES[value].items[0].id,
+                quantity: 1
+            });
+            return;
         }
+        setFormData({ ...formData, [name]: value });
     };
 
     const handleQuantityChange = (e) => {
@@ -81,12 +96,12 @@ const ActivitySubmit = () => {
             const data = new FormData();
             data.append('title', formData.title);
             data.append('category', formData.category);
-            data.append('significance', 'Minor'); // Defaulting since weight was removed from UI
+            data.append('significance', 'Minor');
             data.append('semester', formData.semester);
             data.append('description', formData.description);
             data.append('quantity', formData.quantity);
             data.append('suggested_score', suggestedScore);
-            // Send proof_link explicitly
+
             if (formData.proofLink) {
                 data.append('proof_link', formData.proofLink);
             }
@@ -100,6 +115,7 @@ const ActivitySubmit = () => {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
             }
+
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to submit activity.');
@@ -110,9 +126,7 @@ const ActivitySubmit = () => {
 
     return (
         <div className="app-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#f8fafc', padding: '3rem 1rem 5rem 1rem' }}>
-            <div style={{ maxWidth: '1000px', width: '100%', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-
-                {/* Left Side: Form */}
+            <div style={{ maxWidth: '1100px', width: '100%', display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
                     <div style={{ marginBottom: '2rem' }}>
                         <Link to="/" style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', textDecoration: 'none', marginBottom: '1rem' }}>
@@ -133,111 +147,45 @@ const ActivitySubmit = () => {
                     <form onSubmit={handleSubmit} style={{ background: 'white', padding: '2rem', borderRadius: '0.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
                         <div className="form-group">
                             <label className="form-label" style={{ fontWeight: '600' }} htmlFor="category">Category:</label>
-                            <select
-                                id="category"
-                                name="category"
-                                className="form-input"
-                                value={formData.category}
-                                onChange={handleInputChange}
-                                disabled={isReadOnly}
-                                style={{ maxWidth: '250px' }}
-                            >
+                            <select id="category" name="category" className="form-input" value={formData.category} onChange={handleInputChange} disabled={isReadOnly} style={{ maxWidth: '250px' }}>
                                 <option value="Teaching">Teaching</option>
-                                <option value="Co-curricular">Co-curricular / Admin</option>
-                                <option value="Research">Research & Academic</option>
+                                <option value="Co-curricular">Co-curricular / Service</option>
+                                <option value="Research">Research</option>
                             </select>
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" style={{ fontWeight: '600' }} htmlFor="activityType">Activity Type:</label>
-                            <select
-                                id="activityType"
-                                name="activityType"
-                                className="form-input"
-                                value={formData.activityType}
-                                onChange={handleInputChange}
-                                disabled={isReadOnly}
-                                style={{ maxWidth: '400px' }}
-                            >
-                                {UGC_GUIDELINES[formData.category === 'Co-curricular / Admin' ? 'Co-curricular' : formData.category === 'Research & Academic' ? 'Research' : formData.category]?.map(item => (
-                                    <option key={item.id} value={item.id}>{item.label} (x{item.points} pts)</option>
+                            <select id="activityType" name="activityType" className="form-input" value={formData.activityType} onChange={handleInputChange} disabled={isReadOnly} style={{ maxWidth: '420px' }}>
+                                {selectedGuideline.items.map((item) => (
+                                    <option key={item.id} value={item.id}>{item.label}</option>
                                 ))}
                             </select>
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="quantity">Quantity (Multiplier):</label>
-                            <input
-                                id="quantity"
-                                name="quantity"
-                                type="number"
-                                min="1"
-                                required
-                                className="form-input"
-                                value={formData.quantity}
-                                onChange={handleQuantityChange}
-                                disabled={isReadOnly}
-                                style={{ maxWidth: '100px' }}
-                            />
+                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="quantity">{selectedGuideline.quantityLabel}:</label>
+                            <input id="quantity" name="quantity" type="number" min="1" required className="form-input" value={formData.quantity} onChange={handleQuantityChange} disabled={isReadOnly} style={{ maxWidth: '140px' }} />
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" style={{ fontWeight: '600' }} htmlFor="title">Name:</label>
-                            <input
-                                id="title"
-                                name="title"
-                                type="text"
-                                required
-                                className="form-input"
-                                placeholder="Created a new XR class"
-                                value={formData.title}
-                                onChange={handleInputChange}
-                                readOnly={isReadOnly}
-                                style={{ maxWidth: '400px' }}
-                            />
+                            <input id="title" name="title" type="text" required className="form-input" placeholder="Enter activity title" value={formData.title} onChange={handleInputChange} readOnly={isReadOnly} style={{ maxWidth: '420px' }} />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="semester">Semester:</label>
-                            <input
-                                id="semester"
-                                name="semester"
-                                type="text"
-                                className="form-input"
-                                placeholder="e.g. Fall 2026, Spring 2026"
-                                value={formData.semester}
-                                onChange={handleInputChange}
-                                readOnly={isReadOnly}
-                                style={{ maxWidth: '400px' }}
-                            />
+                            <label className="form-label" style={{ fontWeight: '600' }} htmlFor="semester">Semester / Period:</label>
+                            <input id="semester" name="semester" type="text" className="form-input" placeholder="e.g. Fall 2026, Semester 1" value={formData.semester} onChange={handleInputChange} readOnly={isReadOnly} style={{ maxWidth: '420px' }} />
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" style={{ fontWeight: '600' }} htmlFor="description">Description:</label>
-                            <textarea
-                                id="description"
-                                name="description"
-                                rows="8"
-                                className="form-input"
-                                value={formData.description}
-                                onChange={handleInputChange}
-                                readOnly={isReadOnly}
-                                placeholder="- Conducted research..."
-                            />
+                            <textarea id="description" name="description" rows="8" className="form-input" value={formData.description} onChange={handleInputChange} readOnly={isReadOnly} placeholder="Describe the activity briefly" />
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" style={{ fontWeight: '600' }} htmlFor="proofLink">Link to Proof</label>
-                            <input
-                                id="proofLink"
-                                name="proofLink"
-                                type="url"
-                                className="form-input"
-                                placeholder="https://drive.google.com/..."
-                                value={formData.proofLink}
-                                onChange={handleInputChange}
-                                readOnly={isReadOnly}
-                            />
+                            <input id="proofLink" name="proofLink" type="url" className="form-input" placeholder="https://drive.google.com/..." value={formData.proofLink} onChange={handleInputChange} readOnly={isReadOnly} />
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
@@ -246,12 +194,7 @@ const ActivitySubmit = () => {
                             </button>
                             <div style={{ display: 'flex', gap: '0.75rem' }}>
                                 {isViewMode && isRejectedActivity && !isEditingRejected && (
-                                    <button
-                                        type="button"
-                                        className="btn"
-                                        style={{ background: '#b91c1c', color: 'white', border: 'none', padding: '0.75rem 1.5rem' }}
-                                        onClick={() => setIsEditingRejected(true)}
-                                    >
+                                    <button type="button" className="btn" style={{ background: '#b91c1c', color: 'white', border: 'none', padding: '0.75rem 1.5rem' }} onClick={() => setIsEditingRejected(true)}>
                                         Modify and Submit Again
                                     </button>
                                 )}
@@ -265,7 +208,29 @@ const ActivitySubmit = () => {
                     </form>
                 </div>
 
+                <aside style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                        <h3 style={{ margin: '0 0 1rem 0', color: '#0f172a' }}>Instructions</h3>
+                        <p style={{ margin: '0 0 1rem 0', color: '#64748b', fontSize: '0.9rem' }}>
+                            Category cap: <strong style={{ color: '#0f172a' }}>{selectedGuideline.cap}</strong>
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                            {selectedGuideline.items.map((item) => (
+                                <div key={item.id} style={{ paddingBottom: '0.85rem', borderBottom: '1px solid #e2e8f0' }}>
+                                    <div style={{ fontWeight: '600', color: '#0f172a', marginBottom: '0.2rem' }}>{item.label}</div>
+                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{item.note}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
+                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                        <h3 style={{ margin: '0 0 0.75rem 0', color: '#0f172a' }}>Current Suggestion</h3>
+                        <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
+                            Suggested score for this entry: <strong style={{ color: '#0f172a' }}>{suggestedScore}</strong>. Final points are applied only after review.
+                        </p>
+                    </div>
+                </aside>
             </div>
         </div>
     );

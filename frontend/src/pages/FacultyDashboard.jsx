@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
-import { Award, CheckCircle, Clock, XCircle, Plus, ChevronRight, ChevronLeft, Printer } from 'lucide-react';
+import { CheckCircle, Plus, ChevronRight, ChevronLeft, Printer } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ActivityDonutChart, CategoryStackedBar } from '../components/VisualCharts';
 
@@ -45,7 +45,7 @@ const ActivityCard = ({ activity }) => {
     );
 };
 
-const EmptyAddCard = ({ category, significance }) => (
+const EmptyAddCard = ({ category }) => (
     <Link to="/submit" style={{ textDecoration: 'none' }}>
         <div style={{
             minWidth: '250px',
@@ -73,7 +73,7 @@ const EmptyAddCard = ({ category, significance }) => (
     </Link>
 );
 
-const HorizontalScrollRow = ({ title, activities, category, significance }) => {
+const HorizontalScrollRow = ({ title, activities, category }) => {
     return (
         <div style={{ marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
@@ -89,7 +89,7 @@ const HorizontalScrollRow = ({ title, activities, category, significance }) => {
                     {activities.map(a => (
                         <ActivityCard key={a.id} activity={a} />
                     ))}
-                    <EmptyAddCard category={category} significance={significance} />
+                    <EmptyAddCard category={category} />
                 </div>
 
                 <ChevronRight color="#cbd5e1" size={28} style={{ cursor: 'not-allowed' }} />
@@ -286,14 +286,6 @@ const FacultyDashboard = () => {
 
     if (loading) return <div style={{ padding: '2rem' }}>Loading dashboard...</div>;
 
-    // Filter activities by current tab
-    const filteredActivities = activities.filter(a => a.category === activeTab);
-
-    // Group by Significance
-    const major = filteredActivities.filter(a => a.significance === 'Major');
-    const significant = filteredActivities.filter(a => a.significance === 'Significant');
-    const minor = filteredActivities.filter(a => a.significance === 'Minor');
-
     const handlePrint = () => {
         window.print();
     };
@@ -363,9 +355,9 @@ const FacultyDashboard = () => {
                         <ProfileView user={user} />
                         <div style={{ marginTop: '3rem' }}>
                             <h2 style={{ fontSize: '1.5rem', margin: '0 0 2rem 0', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>My Activities</h2>
-                            <HorizontalScrollRow title="Teaching Activities" activities={activities.filter(a => a.category === 'Teaching')} category="Teaching" significance="Minor" />
-                            <HorizontalScrollRow title="Research Activities" activities={activities.filter(a => a.category === 'Research')} category="Research" significance="Minor" />
-                            <HorizontalScrollRow title="Co-curricular & Service Activities" activities={activities.filter(a => a.category === 'Service' || a.category === 'Co-curricular')} category="Service" significance="Minor" />
+                            <HorizontalScrollRow title="Teaching Activities" activities={activities.filter(a => a.category === 'Teaching')} category="Teaching" />
+                            <HorizontalScrollRow title="Research Activities" activities={activities.filter(a => a.category === 'Research')} category="Research" />
+                            <HorizontalScrollRow title="Co-curricular & Service Activities" activities={activities.filter(a => a.category === 'Service' || a.category === 'Co-curricular')} category="Service" />
                         </div>
                     </>
                 )}
@@ -483,19 +475,19 @@ const FacultyDashboard = () => {
             {activeTab !== 'Annual Report' && activeTab !== 'Profile' && (
                 <aside className="no-print" style={{ width: '300px', background: '#f8fafc', padding: '2rem', borderLeft: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-                    {/* Summary */}
+                    {/* Instructions */}
                     <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0' }}>
                         <h3 style={{ fontSize: '1.1rem', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#0f172a' }}>
-                            <span style={{ fontSize: '0.8rem' }}>▼</span> Summary
+                            <span style={{ fontSize: '0.8rem' }}>▼</span> Instructions
                         </h3>
                         <div style={{ fontSize: '0.875rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <p style={{ margin: 0 }}>Major: {major.length} activities</p>
-                            <p style={{ margin: 0 }}>Significant: {significant.length} activities</p>
-                            <p style={{ margin: 0 }}>Minor: {minor.length} activities</p>
+                            <p style={{ margin: 0 }}>Teaching cap: 100</p>
+                            <p style={{ margin: 0 }}>Co-curricular / Service cap: 30</p>
+                            <p style={{ margin: 0 }}>Research cap: 100</p>
 
                             <div style={{ height: '1px', background: '#e2e8f0', margin: '0.5rem 0' }}></div>
 
-                            <p style={{ margin: 0, fontWeight: 'bold' }}>Total: {filteredActivities.length} activities</p>
+                            <p style={{ margin: 0 }}>Only approved activities count toward API score.</p>
                         </div>
                     </div>
 
