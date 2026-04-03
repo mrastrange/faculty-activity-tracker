@@ -5,8 +5,8 @@ const transporter = nodemailer.createTransport({
     // For production, use Sendgrid/AWS SES or actual SMTP server details
     service: 'gmail', // or your preferred service
     auth: {
-        user: "facultyactivityadmin@gmail.com",
-        pass: "fqwbaucwnqlewrno",
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     }
 });
 

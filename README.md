@@ -1,87 +1,261 @@
 # Faculty Activity Tracker
 
-A full-stack application designed to track and manage faculty activities, performance metrics, and Academic Performance Index (API) scores.
+A full-stack faculty performance tracking system with separate faculty, HOD, and admin workflows.
 
-## Project Structure
+The application lets faculty submit activities, allows HOD/Admin review and approval, stores supporting proof documents, and calculates capped API scores by category.
 
-The project is divided into two main directories:
-- `backend/`: Node.js, Express, PostgreSQL application.
-- `frontend/`: React single-page application built with Vite.
+## Modules
+
+- `frontend/`: React + Vite single-page application
+- `backend/`: Express API with PostgreSQL
+
+## Core Features
+
+- Faculty login and first-time password setup
+- Admin-created user accounts
+- Faculty activity submission with proof link or file upload
+- Rejected activity modification and resubmission
+- HOD/Admin review workflow
+- Faculty dashboard with category-wise API totals
+- Admin analytics and user directory
+- Narrative reporting by category
+- Category-capped API score calculation
+
+## Roles
+
+- `Faculty`
+  - View dashboard
+  - Submit activities
+  - View rejected activities and submit them again after modification
+- `HOD`
+  - Review department activities
+  - Approve or reject submissions
+  - View department reports
+- `Admin`
+  - Create users
+  - Review all activities
+  - View institution-wide analytics and reports
 
 ## Tech Stack
 
+### Frontend
+
+- React 19
+- Vite
+- React Router DOM
+- Axios
+- Recharts
+- Lucide React
+
 ### Backend
-- **Framework**: Node.js & Express
-- **Database**: PostgreSQL (`pg`)
-- **Authentication**: JSON Web Token (`jsonwebtoken`), Bcrypt (`bcryptjs`)
-- **Utilities**:  `nodemailer` (emails), `csv-parse` (data seeding)
+
+- Node.js
+- Express
+- PostgreSQL
+
+## Project Structure
+
+```text
+faculty-activity-tracker/
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middlewares/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   └── utils/
+│   ├── uploads/
+│   ├── migrateApiScores.js
+│   ├── fixDb.js
+│   ├── fixPaths.js
+│   ├── seedCsv.js
+│   ├── seedUsers.js
+│   └── server.js
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   └── services/
+│   └── public/
+├── faculty.csv
+└── README.md
+```
+
+## Environment Variables
+
+### Backend
+
+Create `backend/.env` for local development.
+
+Minimum required:
+
+```env
+DATABASE_URL=postgresql://username:password@host:5432/database_name
+JWT_SECRET=your_jwt_secret
+PORT=5000
+NODE_ENV=development
+```
+
+### Important Notes
+
+- The backend now uses `DATABASE_URL` directly.
+- Keep `DATABASE_URL` configured in the service environment.
+- SSL is enabled automatically for production-style hosted PostgreSQL URLs.
+
+## Installation
+
+### 1. Clone the project
+
+```bash
+git clone <your-repo-url>
+cd faculty-activity-tracker
+```
+
+### 2. Install backend dependencies
+
+```bash
+cd backend
+npm install
+```
+
+### 3. Install frontend dependencies
+
+```bash
+cd ../frontend
+npm install
+```
+
+## Running Locally
+
+### Backend
+
+From `backend/`:
+
+```bash
+node server.js
+```
+
+or
+
+```bash
+npx nodemon server.js
+```
+
+The backend:
+
+- connects to PostgreSQL using `DATABASE_URL`
+- runs runtime schema checks on startup
 
 ### Frontend
-- **Framework**: React 19 & Vite
-- **Routing**: React Router DOM
-- **Data Visualization**: Recharts
-- **Icons**: Lucide React
-- **API Client**: Axios
 
----
+From `frontend/`:
 
-## Installation Tips
+```bash
+npm run dev
+```
 
-### Prerequisites
-- Node.js (v18 or higher recommended)
-- PostgreSQL database installed and running locally or in the cloud.
+For production build:
 
-### 1. Setting up the Backend
+```bash
+npm run build
+```
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Set up environment variables:
-   Create a `.env` file in the `backend` directory and add your configuration details. Example:
-   ```env
-   # Database Configuration
-   DB_USER=postgres
-   DB_PASSWORD=yourpassword
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=faculty_tracker
+## Frontend API Base URL
 
-   # JWT Secret for authentication
-   JWT_SECRET=your_super_secret_key
+The current frontend API client is configured in `frontend/src/services/api.js`.
 
-   # SMTP Configuration for Email setup (Nodemailer)
-   EMAIL_HOST=smtp.example.com
-   EMAIL_PORT=587
-   EMAIL_USER=your_email@example.com
-   EMAIL_PASS=your_email_password
-   ```
-4. Start the backend server (using nodemon for development):
-   ```bash
-   npx nodemon server.js
-   ```
+Right now it points to:
 
-### 2. Setting up the Frontend
+- `https://faculty-activity-tracker.onrender.com/api/v1`
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-4. Open your browser and navigate to the local URL provided by Vite (usually `http://localhost:5173`).
+If you want to run frontend against a local backend, update that file before local testing.
 
----
+## Database Notes
+
+The backend performs safe runtime schema checks during startup:
+
+- adds missing score columns in `api_scores`
+- adds missing `quantity` and `suggested_score` in `activities`
+- ensures category compatibility for existing activity types
+
+These checks are additive only. They are not intended to delete data.
+
+## API Score Logic
+
+API scores are calculated only from `Approved` activities.
+
+### Category Caps
+
+- `Teaching`: `100`
+- `Co-curricular / Service`: `30`
+- `Research`: `100`
+
+### Final Score Formula
+
+```text
+teaching_score = min(sum(approved Teaching assigned_score), 100)
+co_curricular_score = min(sum(approved Co-curricular/Service assigned_score), 30)
+research_score = min(sum(approved Research assigned_score), 100)
+total_score = teaching_score + co_curricular_score + research_score
+```
+
+This prevents one category from dominating the full API score.
+
+## Main Backend Routes
+
+### Auth
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/check-email`
+- `POST /api/v1/auth/setup-password`
+- `GET /api/v1/auth/me`
+- `GET /api/v1/auth/all`
+- `POST /api/v1/auth/admin/users`
+
+### Activities
+
+- `POST /api/v1/activities`
+- `GET /api/v1/activities`
+- `PUT /api/v1/activities/:id/resubmit`
+- `GET /api/v1/activities/department`
+- `GET /api/v1/activities/all`
+- `PUT /api/v1/activities/:id/review`
+
+### Dashboard
+
+- `GET /api/v1/dashboard/faculty`
+- `GET /api/v1/dashboard/admin/analytics`
+- `GET /api/v1/dashboard/admin/graphs`
+
+### Narratives
+
+- narrative APIs are available under `/api/v1/narratives`
+
+
+## Utility Scripts Kept In Repo
+
+- `backend/seedCsv.js`
+  - seed users from `faculty.csv`
+- `backend/seedUsers.js`
+  - seed basic users manually
+- `backend/migrateApiScores.js`
+  - additive migration for score-related fields
+- `backend/fixDb.js`
+  - sets a default department for existing users
+- `backend/fixPaths.js`
+  - normalizes stored proof document paths
+
+Use them carefully and review the code before running them against production.
+
+## Known Limitations
+
+- The frontend API base URL is hardcoded to the deployed backend by default.
+- Email service configuration is currently not fully environment-driven and should be cleaned before production hardening.
+- The current API scoring logic is a practical implementation for this project and not a full digital implementation of every UGC 2018 scoring rule.
 
 ## License
+
 This project is licensed under the MIT License.
