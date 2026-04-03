@@ -224,12 +224,7 @@ const ActivitySubmit = () => {
                         </div>
                     </div>
 
-                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                        <h3 style={{ margin: '0 0 0.75rem 0', color: '#0f172a' }}>Current Suggestion</h3>
-                        <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
-                            Suggested score for this entry: <strong style={{ color: '#0f172a' }}>{suggestedScore}</strong>. Final points are applied only after review.
-                        </p>
-                    </div>
+                
                 </aside>
             </div>
         </div>
