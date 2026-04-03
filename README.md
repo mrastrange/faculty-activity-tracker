@@ -260,7 +260,10 @@ This prevents one category from dominating the full API score.
 ![Admin User Directory](imgs/Screenshot%20(7).png)
 ![Admin Faculty Report](imgs/Screenshot%20(8).png)
 ![CSV or Report Output](imgs/Screenshot%20(9).png)
+![User Directory](imgs/ss_userdir.png)
 
+### Mail service
+![Email Notification](imgs/ss_email.png)
 ## Main Backend Routes
 
 ### Auth
